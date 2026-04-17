@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Support - NH Network</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        /* 
+         * ==========================================================================
+         * GLOBAL STYLES & DESIGN TOKENS
+         * ==========================================================================
+         */
+        
+        /* Reset and base font setup */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Inter", sans-serif; }
+        
+        /* 
+         * Design Tokens
+         * Centralized color palette and spacing variables for consistent UI.
+         */
+        :root {
+            --bg-dark: #0f1419;           /* Primary background color */
+            --bg-card: rgba(59, 130, 246, 0.08); /* Translucent background for cards */
+            --border-color: rgba(59, 130, 246, 0.15); /* Soft border for elements */
+            --text-primary: #ffffff;      /* High emphasis text */
+            --text-secondary: #cbd5e0;    /* Medium emphasis text */
+            --text-muted: #a0aec0;        /* Low emphasis text */
+            --accent-blue: #3b82f6;       /* Primary blue brand color */
+            --accent-purple: #8b5cf6;     /* Secondary purple accent color */
+            --radius-lg: 16px;            /* Corner radius for panels */
+            --radius-md: 10px;            /* Corner radius for inputs/buttons */
+        }
+        
+        /* 
+         * Layout and Background
+         * Implements a fixed-position decorative gradient background.
+         */
+        body {
+            background: #0f1419; 
+            color: var(--text-primary); 
+            overflow-x: hidden; 
+            min-height: 100vh;
+            display: flex; 
+            flex-direction: column; 
+            position: relative;
+        }
+        
+        /* Decorative radial gradients for modern depth effect */
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.1), transparent),
+                        radial-gradient(ellipse 80% 80% at 80% 80%, rgba(139, 92, 246, 0.08), transparent);
+            pointer-events: none; z-index: -1;
+        }
+        
+        a { text-decoration: none; color: inherit; }
+        
+        /* 
+         * Navigation Header
+         * Glassmorphism effect with backdrop filter and sticky positioning.
+         */
+        header {
+            width: 100%; padding: 1.5rem 5%; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(15, 20, 25, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+            position: sticky; top: 0; z-index: 10; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Branding and Logo */
+        .brand { display: inline-flex; align-items: center; gap: 1rem; cursor: pointer; transition: all 0.3s ease; }
+        .brand:hover { transform: scale(1.02); }
+        .logo-icon { 
+            width: 48px; height: 48px; border-radius: 12px; 
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: 800; font-size: 20px; color: #ffffff; 
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3); 
+            position: relative; overflow: hidden; 
+        }
+        .logo-text { 
+            font-size: 14px; font-weight: 700; letter-spacing: 1px; 
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+            background-clip: text; 
+        }
+        
+        /* Navigation Links */
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-link { color: var(--text-secondary); font-weight: 600; font-size: 14px; transition: color 0.3s ease; }
+        .nav-link:hover { color: #ffffff; }
+        
+        /* 
+         * Standard Button Component
+         * Reusable button styles with gradient background and hover animations.
+         */
+        .btn { 
+            padding: 0.85rem 2.2rem; border: none; border-radius: var(--radius-md); 
+            cursor: pointer; font-size: 14px; font-weight: 600; 
+            transition: all 0.3s ease; display: inline-flex; 
+            align-items: center; gap: 6px; position: relative; 
+            overflow: hidden; text-decoration: none; 
+        }
+        .btn-primary { 
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); 
+            color: #ffffff; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4); 
+        }
+        .btn-outline { 
+            background: rgba(139, 92, 246, 0.15); color: #e0e7ff; 
+            border: 1.5px solid rgba(139, 92, 246, 0.4); backdrop-filter: blur(10px); 
+        }
+        .btn-outline:hover { 
+            background: rgba(139, 92, 246, 0.25); border-color: rgba(139, 92, 246, 0.6); 
+            transform: translateY(-3px); box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3); 
+        }
+
+        /* 
+         * Page Sections
+         */
+        main { flex: 1; padding: 4rem 5%; max-width: 800px; margin: 0 auto; width: 100%; }
+        
+        /* Page Header with fade-in animation */
+        .page-header { text-align: center; margin-bottom: 4rem; animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        h1 { 
+            font-size: 48px; font-weight: 900; margin-bottom: 1rem; 
+            background: linear-gradient(135deg, #ffffff 0%, #a0aec0 100%); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+            background-clip: text; letter-spacing: -1px; 
+        }
+        .page-subtitle { font-size: 18px; color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.6; }
+        
+        /* 
+         * Contact Form Card
+         * Glassmorphism panel container for the contact form.
+         */
+        .contact-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 3rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Form Field Grouping */
+        .form-group {
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e7ff;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Input Field Styling */
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            background: rgba(15, 20, 25, 0.5);
+            border: 1.5px solid rgba(59, 130, 246, 0.25);
+            border-radius: var(--radius-md);
+            color: #ffffff;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(15, 20, 25, 0.8);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Textarea specific overrides */
+        textarea.form-input {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        /* 
+         * Status Messages
+         * Conditional feedback banners for form operations.
+         */
+        .status-message {
+            display: none;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* Success status variant */
+        .status-message.success {
+            display: block;
+            background: rgba(34, 197, 94, 0.15);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        /* Error status variant */
+        .status-message.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Submit Button custom style */
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            font-size: 16px;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+            h1 { font-size: 32px; } 
+            .page-subtitle { font-size: 16px; } 
+            .contact-card { padding: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+     * GLOBAL HEADER
+     * The header is dynamically injected via navbar.js to ensure consistency across the platform.
+     -->
+    <header id="global-header"></header>
+    <script src="navbar.js"></script>
+
+    <!-- 
+     * MAIN CONTENT AREA
+     * Centered layout for the contact form and informational headers.
+     -->
+    <main>
+        <!-- Navigation / Breadcrumbs -->
+        <div style="max-width: 800px; margin: 0 auto 2rem; padding: 0;">
+            <button onclick="history.back()" class="btn btn-outline" style="padding: 0.6rem 1.2rem; border-radius: 20px; font-size: 14px; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">&larr; &nbsp;Back</button>
+        </div>
+
+        <!-- Page Introduction -->
+        <section class="page-header">
+            <h1>Contact Support</h1>
+            <p class="page-subtitle">Have a question or need assistance? Send us a message and our team will get back to you shortly.</p>
+        </section>
+
+        <!-- 
+         * CONTACT FORM CONTAINER
+         * Contains the status box for feedback and the primary submission form.
+         -->
+        <section class="contact-card">
+            <!-- Feedback box for success/error notifications -->
+            <div id="statusBox" class="status-message"></div>
+            
+            <form id="contactForm">
+                <!-- User Identity Fields -->
+                <div class="form-group">
+                    <label class="form-label" for="name">Full Name</label>
+                    <input type="text" id="name" class="form-input" placeholder="Enter your name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
+                </div>
+                
+                <!-- Inquiry Details -->
+                <div class="form-group">
+                    <label class="form-label" for="message">Your Message</label>
+                    <textarea id="message" class="form-input" placeholder="How can we help you?" required></textarea>
+                </div>
+                
+                <!-- Submission Action -->
+                <button type="submit" class="btn btn-primary btn-submit" id="submitBtn">Send Message</button>
+            </form>
+        </section>
+    </main>
+
+    <!-- Site Footer: Injected via footer.js -->
+    <script src="footer.js"></script>
+
+    <script>
+        /**
+         * CONTACT FORM SUBMISSION LOGIC
+         * Handles the asynchronous submission of user inquiries to the support API.
+         */
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            // Prevent default page reload on form submission
+            e.preventDefault();
+            
+            // Collect and sanitize user input
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const message = document.getElementById('message').value.trim();
+            
+            // Reference UI elements for state management
+            const btn = document.getElementById('submitBtn');
+            const statusBox = document.getElementById('statusBox');
+            
+            // Enter loading state: Disable button and reset status box
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            statusBox.className = 'status-message';
+            
+            // Attempt to retrieve current user session ID for context (optional for API)
+            const userId = localStorage.getItem('userId');
+            
+            try {
+                // Dispatch POST request to the contact API endpoint
+                const response = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, message, userId })
+                });
+                
+                const data = await response.json();
+                
+                // Handle successful submission
+                if (response.ok && data.success) {
+                    statusBox.textContent = 'Your message has been sent successfully. We will be in touch shortly!';
+                    statusBox.classList.add('success');
+                    // Reset form fields on success
+                    document.getElementById('contactForm').reset();
+                } else {
+                    // Handle API-level errors
+                    statusBox.textContent = data.error || 'Failed to send message. Please try again.';
+                    statusBox.classList.add('error');
+                }
+            } catch (err) {
+                // Handle network or unexpected runtime errors
+                console.error('Submission Error:', err);
+                statusBox.textContent = 'An error occurred. Please check your network and try again.';
+                statusBox.classList.add('error');
+            } finally {
+                // Exit loading state: Re-enable button
+                btn.disabled = false;
+                btn.textContent = 'Send Message';
+            }
+        });
+    </script>
+</body>
+</html>

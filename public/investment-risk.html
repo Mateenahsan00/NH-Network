@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Investment Risks</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* 
+       Global Styles for the Investment Risk Page 
+       Focuses on a focused, document-like experience with a dark theme consistent with the platform.
+    */
+    body {
+      background:#0f1419;
+      color:#fff;
+      font-family: Inter, sans-serif;
+      margin: 0;
+      height: 100vh;
+      overflow: hidden; /* Prevents body scroll, scrolling is handled by .wrap */
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 
+       Main Content Wrapper 
+       Centered container for legal text with internal scrolling.
+    */
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      color:#cbd5e0;
+      margin:12px 0 20px;
+    }
+
+    /* 
+       Legal Content Panel 
+       Uses a subtle gradient and glassmorphic border to maintain UI consistency.
+    */
+    .panel {
+      background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.06) 100%);
+      border:1px solid rgba(59,130,246,0.15);
+      border-radius:16px;
+      padding: 1.8rem;
+      margin-bottom: 200px; /* Provides extra space at the bottom for readability */
+    }
+
+    ul {
+      color:#cbd5e0;
+      line-height:1.85;
+      padding-left: 20px;
+    }
+
+    /* 
+       Action Button 
+       Styled with the primary platform gradient and elevation effects.
+    */
+    .btn {
+      border:none;
+      border-radius: 10px;
+      background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 100%);
+      color:#fff;
+      font-weight:600;
+      font-size:14px;
+      padding:0.65rem 1.2rem;
+      cursor:pointer;
+      margin-top: 16px;
+      box-shadow: 0 4px 20px rgba(59,130,246,0.4);
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(59,130,246,0.55);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .scroll-indicator {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 
+       Main Page Structure 
+       Centered container for legal disclosure content.
+  -->
+  <div class="wrap" id="scrollContainer">
+    <h1>Investment Risks</h1>
+
+    <p class="subtitle">
+      Cryptocurrency and digital investments carry significant market risk. Prices can rise or fall rapidly. 
+      By continuing, you acknowledge understanding all investment-related risks.
+    </p>
+
+    <!-- 
+         Disclosure Panel 
+         Contains specific risk bullet points and the primary acceptance action.
+    -->
+    <div class="panel">
+     
+     
+     
+     
+   <section class="risks-disclaimer">
+  <h2>Risk Disclosure</h2>
+  <p>Investing in digital assets and cryptocurrencies carries significant risks. Please ensure you understand these risks fully before engaging with our services:</p>
+  <ul>
+    <li>
+      <strong>Market Volatility:</strong> Cryptocurrency markets are extremely volatile. Prices can change rapidly and unpredictably, leading to sudden and significant fluctuations in value.
+    </li>
+    <li>
+      <strong>No Guarantee of Future Performance:</strong> Past performance of any digital asset is not indicative of future results. There is no guarantee of future growth, returns, or the stability of any investment.
+    </li>
+    <li>
+      <strong>Regulatory and Legal Risks:</strong> The regulatory landscape for digital assets is constantly evolving. Government decisions, new laws, or changes in existing regulations can profoundly impact the availability, legality, and value of certain services or assets.
+    </li>
+    <li>
+      <strong>Risk of Capital Loss:</strong> There is always a high possibility of losing a substantial portion or even all of your invested capital. You should be prepared for the complete loss of any funds you invest.
+    </li>
+    <li>
+      <strong>Affordability of Loss:</strong> Only invest funds that you can genuinely afford to lose without incurring financial hardship or compromising your living standards.
+    </li>
+    <li>
+      <strong>Technological and Operational Risks:</strong> Digital asset platforms, like any technology, may face technical issues, system downtime, security breaches, or delays in transactions. Such events can result in loss of funds or access to your assets.
+    </li>
+    <li>
+      <strong>Global Market Impact:</strong> Broader economic, political, and social global factors can unexpectedly influence market conditions, leading to adverse effects on digital asset values.
+    </li>
+  </ul>
+  <p>It is crucial to conduct your own research and seek independent financial advice before making any investment decisions.</p>
+</section>
+
+
+
+
+      <!-- Primary confirmation button to acknowledge the risks -->
+      <button id="acceptRisk" class="btn">I Have Read & Accept Investment Risks</button>
+    </div>
+  </div>
+
+  <!-- UI utility for visual cues when content exceeds viewport -->
+  <div class="scroll-indicator" id="scrollIndicator">↓ Scroll to read all risks ↓</div>
+
+  <script>
+    /**
+     * Investment Risk Acceptance Script
+     * 
+     * Manages the user's acknowledgement of legal disclosures.
+     * Persists acceptance to LocalStorage and handles navigation redirection.
+     */
+    const acceptButton = document.getElementById('acceptRisk');
+
+    acceptButton.addEventListener("click", () => {
+      try {
+        // Retrieve current user ID to store a user-specific acceptance flag
+        const userId = localStorage.getItem("userId") || "unknown_user";
+        localStorage.setItem(`investmentRiskAccepted_${userId}`, "1");
+      } catch (_) {
+        // Silent catch for potential LocalStorage access issues (e.g., private mode)
+      }
+
+      /**
+       * Navigation Redirection Logic
+       * 
+       * 1. If 'returnToInvestor' is set in sessionStorage, it means this was opened 
+       *    as a popup/external tab from the Investor Enrollment form. In this case, 
+       *    we close the current window to return focus to the form.
+       * 
+       * 2. Otherwise, we redirect the user to the main 'Become Investor' page.
+       */
+      const returnToInvestor = sessionStorage.getItem('returnToInvestor');
+      if (returnToInvestor === 'true') {
+        sessionStorage.removeItem('returnToInvestor');
+        window.close();
+      } else {
+        window.location.href = "/become-investor.html";
+      }
+    });
+  </script>
+
+    <!-- Injects modular footer script for consistent branding -->
+    <script src="footer.js"></script>
+</body>
+</html>

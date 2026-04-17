@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terms of Service - NH Network</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        /* Base reset and global font configuration for a consistent baseline */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", sans-serif;
+        }
+
+        /* Centralized Design System variables for theme consistency across the platform */
+        :root {
+            --bg-dark: #0f1419;
+            --bg-card: rgba(59, 130, 246, 0.08);
+            --border-color: rgba(59, 130, 246, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: #cbd5e0;
+            --text-muted: #a0aec0;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+        }
+
+        /* Body layout configured for a full-height, dark-themed experience */
+        body {
+            background: #0f1419;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Ambient background glow effect using radial gradients to enhance depth */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.1), transparent),
+                radial-gradient(ellipse 80% 80% at 80% 80%, rgba(139, 92, 246, 0.08), transparent);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Global link styling overrides */
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Header styling with a glassmorphism effect (blur + translucency) */
+        header {
+            width: 100%;
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 20, 25, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Branding container in the header */
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .brand:hover {
+            transform: scale(1.02);
+        }
+
+        /* Logo icon container with a vibrant primary-to-accent gradient */
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            color: #ffffff;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Stylized gradient text for the brand name */
+        .logo-text {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Header navigation links layout */
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #ffffff;
+        }
+
+        /* Universal button styles with smooth hover interactions */
+        .btn {
+            padding: 0.85rem 2.2rem;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+
+        /* Primary action button variant with a distinctive gradient and shadow */
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Secondary/Outline button variant with a subtle translucent fill and border */
+        .btn-outline {
+            background: rgba(139, 92, 246, 0.15);
+            color: #e0e7ff;
+            border: 1.5px solid rgba(139, 92, 246, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-outline:hover {
+            background: rgba(139, 92, 246, 0.25);
+            border-color: rgba(139, 92, 246, 0.6);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Semantic main content wrapper centered for readability */
+        main {
+            flex: 1;
+            padding: 4rem 5%;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Header section for the page content with entrance animation */
+        .page-header {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        /* Standardized fade-in animation for entrance effects */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Main heading typography with a sophisticated gradient fill */
+        h1 {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #a0aec0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        /* Descriptive page subtitle styling */
+        .page-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Container for the terms content with a glassmorphism card effect */
+        .content-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 3rem;
+            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+            color: var(--text-secondary);
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        /* Semantic headings for policy subsections */
+        .content-card h2 {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 800;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Remove top margin for the first heading in the content card */
+        .content-card h2:first-child {
+            margin-top: 0;
+        }
+
+        /* Standardized spacing for text blocks and lists in the content card */
+        .content-card p {
+            margin-bottom: 1.5rem;
+        }
+
+        .content-card ul {
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+
+        .content-card li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Mobile and tablet responsive typography and layout adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+
+            .page-subtitle {
+                font-size: 16px;
+            }
+
+            .content-card {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 
+        Dynamic header placeholder populated by navbar.js.
+        This provides a unified navigation bar across all authenticated and public pages.
+    -->
+    <header id="global-header"></header>
+    <script src="navbar.js"></script>
+
+    <!-- Main page content container -->
+    <main>
+        <br>
+        <br>
+        <!-- Page title and introductory section with entrance animations -->
+        <section class="page-header">
+            <h1>Terms of Service</h1>
+            <p class="page-subtitle">Please read these Terms of Service carefully before using our platform.</p>
+        </section>
+
+        <!-- Structured Terms of Service content housed in a stylized card -->
+        <section class="content-card">
+            <h2>1. Agreement to Terms</h2>
+            <p>By accessing or using our websites and services, you agree to be bound by these Terms and our Privacy Policy.
+                If you do not agree to these Terms, please do not use our services.</p>
+
+            <h2>2. User Accounts</h2>
+            <p>When you create an account with us, you must provide us information that is accurate, complete, and current
+                at all times. Failure to do so constitutes a breach of the Terms, which may result in immediate termination
+                of your account on our Service.</p>
+
+            <h2>3. Acceptable Use</h2>
+            <p>You agree not to use the platform in any way that is unlawful, or harms us, our service providers, your
+                suppliers, or any other user. You must not violate any laws in your jurisdiction.</p>
+
+            <h2>4. Intellectual Property</h2>
+            <p>The Service and its original content, features and functionality are and will remain the exclusive property
+                of NH Network and its licensors. The Service is protected by copyright, trademark, and other laws.</p>
+
+            <h2>5. Termination</h2>
+            <p>We may terminate or suspend your account immediately, without prior notice or liability, for any reason
+                whatsoever, including without limitation if you breach the Terms.</p>
+
+            <h2>6. Changes</h2>
+            <p>We reserve the right, at our sole discretion, to modify or replace these Terms at any time. What constitutes
+                a material change will be determined at our sole discretion.</p>
+
+            <h2>7. Contact Information</h2>
+            <p>If you have any questions about these Terms, please contact us.</p>
+        </section>
+    </main>
+
+    <!-- Shared footer component for global consistency -->
+    <script src="footer.js"></script>
+
+    <script>
+        /**
+         * Global navigation is dynamically managed by navbar.js.
+         * This script tag serves as a placeholder for any page-specific JS initialization.
+         */
+    </script>
+</body>
+
+</html>

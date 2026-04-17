@@ -1,0 +1,92 @@
+.site-footer {
+    text-align: center;
+    padding: 3rem 5%;
+    border-top: 1px solid var(--border-color, rgba(59, 130, 246, 0.15));
+    background: rgba(15, 20, 25, 0.95);
+    font-size: 14px;
+    margin-top: auto;
+    width: 100%;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+}
+
+.site-footer .footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.site-footer .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.site-footer .footer-links a {
+    color: var(--text-secondary, #cbd5e0);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease, transform 0.2s ease;
+    margin: 0;
+}
+
+.site-footer .footer-links a:hover {
+    color: var(--accent-blue, #3b82f6);
+    transform: translateY(-1px);
+}
+
+.site-footer .footer-social {
+    display: flex;
+    gap: 1rem;
+}
+
+.site-footer .footer-social .social-icon {
+    color: var(--text-secondary, #cbd5e0);
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin: 0;
+    text-decoration: none;
+}
+
+.site-footer .footer-social .social-icon:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--accent-blue, #3b82f6);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
+}
+
+.site-footer .footer-copyright {
+    font-size: 13px;
+    color: var(--text-muted, #a0aec0);
+}
+
+/* Desktop Layout Adjustments */
+@media (min-width: 768px) {
+    .site-footer .footer-container {
+        flex-direction: row;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .site-footer .footer-copyright {
+        width: 100%;
+        margin-top: 1rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+}

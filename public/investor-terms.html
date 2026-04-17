@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Investor Terms and Conditions</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /**
+     * @section Global Page Layout
+     * @description Sets the foundation for the terms and conditions page.
+     * Uses a fixed height (100vh) and flexbox to manage the layout, ensuring the content 
+     * is centered and constrained within the viewport.
+     */
+    body {
+      background:#0f1419;
+      color:#fff;
+      font-family: Inter, sans-serif;
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /**
+     * @section Content Wrapper
+     * @description A centered container that limits the maximum width of the text for 
+     * better readability. It enables vertical scrolling for the terms content.
+     */
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /**
+     * @section Typography
+     * @description Styles for the main heading and the descriptive subtitle.
+     */
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      color:#cbd5e0;
+      margin:12px 0 20px;
+    }
+
+    /**
+     * @section Terms Panel
+     * @description A glassmorphic card component that houses the actual terms and conditions.
+     * Uses a translucent gradient and a subtle border to fit the platform's aesthetic.
+     */
+    .panel {
+      background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.06) 100%);
+      border: 1px solid rgba(59,130,246,0.15);
+      border-radius: 16px;
+      padding: 1.8rem;
+      margin-bottom: 200px;
+    }
+
+    /**
+     * @section List Styling
+     * @description Formats the individual terms for clarity and spacing.
+     */
+    ul {
+      color:#cbd5e0;
+      line-height: 1.85;
+      padding-left: 20px;
+    }
+
+    /**
+     * @section Action Button
+     * @description The primary Call-To-Action (CTA) for accepting the terms.
+     * Includes hover states and shadow effects for a premium interactive feel.
+     */
+    .btn {
+      border:none;
+      border-radius: 10px;
+      background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 100%);
+      color:#fff;
+      font-weight:600;
+      font-size:14px;
+      padding:0.65rem 1.2rem;
+      cursor:pointer;
+      margin-top: 16px;
+      box-shadow: 0 4px 20px rgba(59,130,246,0.4);
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(59,130,246,0.55);
+    }
+
+    /**
+     * @section Button Disabled State
+     * @description Visual feedback when the button is inactive (e.g., before scrolling).
+     */
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /**
+     * @section Scroll Hint
+     * @description An optional element to guide the user to read the full content.
+     */
+    .scroll-indicator {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 
+    Main Layout Wrapper
+    Provides a scrollable area for the terms while keeping the header visible.
+  -->
+  <div class="wrap" id="scrollContainer">
+    <!-- Page Header and Instruction -->
+    <h1>Investor Terms and Conditions</h1>
+    <p class="subtitle">Please read and accept these terms before continuing to the investor access form.</p>
+
+    <!-- Terms Container: Lists the platform's core legal and security policies -->
+    <div class="panel">
+   
+   
+   
+     <section class="terms-and-disclaimers">
+  <h2>Important Information & Disclaimers</h2>
+  <p>Please review the following critical information regarding our platform and services:</p>
+  <ul>
+    <li>
+      <strong>Investment Risks:</strong> All investments inherently involve financial risk. There is no guarantee of specific returns, profits, or capital preservation.
+    </li>
+    <li>
+      <strong>KYC Compliance:</strong> You are required to provide accurate Know Your Customer (KYC) information, including valid identification, address proof, and other verification documents.
+    </li>
+    <li>
+      <strong>Fraudulent Activity:</strong> Any submission of fraudulent, suspicious, or false information will result in immediate account termination and may lead to further action.
+    </li>
+    <li>
+      <strong>Security Responsibility:</strong> You must never share your login credentials, verification codes, wallet keys, or any other sensitive personal data with anyone. The security of your account is your sole responsibility.
+    </li>
+    <li>
+      <strong>Market Fluctuations:</strong> The value of your investment can fluctuate significantly, both upwards and downwards, based on prevailing market conditions. You acknowledge that you are investing at your own sole risk.
+    </li>
+    <li>
+      <strong>Document Usage:</strong> All submitted documents will be used exclusively for identity verification, regulatory compliance, and security checks.
+    </li>
+    <li>
+      <strong>Platform Discretion:</strong> The platform reserves the unequivocal right to review, approve, or reject any investment request or account registration at its sole discretion.
+    </li>
+    <li>
+      <strong>Consent to Contact:</strong> By accepting these terms, you grant the platform permission to contact you for necessary verification processes, important updates, and service-related communications.
+    </li>
+  </ul>
+  <p>Your continued use of our services implies your full understanding and acceptance of these terms.</p>
+</section>
+
+      <!-- Acceptance Button: Triggers the logic to record consent and proceed -->
+      <button id="acceptInvestorTerms" class="btn">I Accept Investor Terms</button>
+    </div>
+  </div>
+
+  <!-- Optional helper element to encourage reading before acceptance -->
+  <div class="scroll-indicator" id="scrollIndicator">↓ Scroll to read all terms ↓</div>
+
+  <script>
+    /**
+     * @section Terms Acceptance Controller
+     * @description Manages the user's consent for the investor terms.
+     */
+    const acceptButton = document.getElementById('acceptInvestorTerms');
+
+    /**
+     * @event click
+     * @description Handles the click event on the "I Accept" button.
+     * Records the acceptance in localStorage and redirects the user back to the 
+     * enrollment flow or the main investor form.
+     */
+    acceptButton.addEventListener('click', () => {
+      try {
+        /**
+         * Persistence: Links the acceptance to the specific logged-in user.
+         * If no user is found, it defaults to 'anonymous_user'.
+         */
+        const userId = localStorage.getItem('userId') || 'anonymous_user';
+        localStorage.setItem(`investorTermsAccepted_${userId}`, '1');
+      } catch (_) {
+        // Silently handle storage errors (e.g., private browsing mode)
+      }
+
+      /**
+       * Navigation Logic:
+       * 1. If the terms were opened as a popup from the investor form ('returnToInvestor'),
+       *    close the current window to return focus to the form.
+       * 2. Otherwise, redirect the user to the 'become-investor.html' page.
+       */
+      const returnToInvestor = sessionStorage.getItem('returnToInvestor');
+      if (returnToInvestor === 'true') {
+        sessionStorage.removeItem('returnToInvestor');
+        window.close();
+      } else {
+        window.location.href = "/become-investor.html";
+      }
+    });
+  </script>
+
+    <script src="footer.js"></script>
+</body>
+</html>

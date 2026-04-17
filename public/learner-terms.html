@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learner Terms and Conditions</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /**
+     * @section Global Page Styles
+     * @description Sets the foundational look and feel for the learner terms page.
+     * Uses a dark background and a modern, high-contrast text color for optimal readability.
+     */
+    body {
+      background:#0f1419;
+      color:#fff;
+      font-family: Inter, sans-serif;
+      margin: 0;
+    }
+
+    /**
+     * @section Content Wrapper
+     * @description Centers the content on the page and provides consistent horizontal padding.
+     * Constraints the maximum width to maintain readability of long-form text.
+     */
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    /**
+     * @section Typography
+     * @description Styles for the main page title and the supporting subtitle.
+     */
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      color:#cbd5e0;
+      margin:12px 0 20px;
+    }
+
+    /**
+     * @section Terms Panel
+     * @description A glassmorphic card component that contains the terms list.
+     * Uses a subtle gradient background and a translucent border to align with the platform's UI language.
+     */
+    .panel {
+      background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.06) 100%);
+      border:1px solid rgba(59,130,246,0.15);
+      border-radius:16px;
+      padding: 1.8rem;
+    }
+
+    /**
+     * @section List Item Styling
+     * @description Ensures the terms list is legible with appropriate line height and indentation.
+     */
+    ul {
+      color:#cbd5e0;
+      line-height:1.85;
+      padding-left: 20px;
+    }
+
+    /**
+     * @section Acceptance Button
+     * @description The primary action button for confirming the terms.
+     * Features a vibrant gradient and a soft shadow for visual prominence.
+     */
+    .btn {
+      border:none;
+      border-radius: 10px;
+      background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 100%);
+      color:#fff;
+      font-weight:600;
+      font-size:14px;
+      padding:0.65rem 1.2rem;
+      cursor:pointer;
+      margin-top: 16px;
+      box-shadow: 0 4px 20px rgba(59,130,246,0.4);
+      transition: 0.2s;
+    }
+
+    /**
+     * @section Button Hover Effect
+     * @description Provides tactile feedback to the user by elevating the button on hover.
+     */
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(59,130,246,0.55);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Main Content Wrapper: Contains the header and the terms panel -->
+  <div class="wrap">
+    <!-- Header: Clearly identifies the purpose of the page -->
+    <h1>Learner Terms and Conditions</h1>
+    <p class="subtitle">Please read and accept these terms before continuing to the learner access form.</p>
+
+    <!-- Terms Panel: Lists the rules and responsibilities for platform learners -->
+    <div class="panel">
+     
+     
+      <section class="terms-of-service">
+  <h2>Terms of Service & User Conduct Guidelines</h2>
+  <p>By accessing and using our platform, you agree to comply with the following terms and conditions:</p>
+  <ul>
+    <li>
+      <strong>Accuracy of Information:</strong> Users are required to provide accurate, complete, and truthful personal information during registration and throughout their engagement with the platform.
+    </li>
+    <li>
+      <strong>Account Security:</strong> The confidentiality of your login credentials (username, password) is your sole responsibility. You must not share these details with any third party, and you are accountable for all activities that occur under your account.
+    </li>
+    <li>
+      <strong>Intellectual Property & Misuse:</strong> You agree not to misuse, reproduce, distribute, or exploit any learning materials, content, or intellectual property provided on the platform for unauthorized or illegal purposes.
+    </li>
+    <li>
+      <strong>Respectful Conduct:</strong> All users are expected to maintain a respectful and professional demeanor towards instructors, fellow learners, and platform staff at all times. Harassment, discrimination, or any form of offensive behavior will not be tolerated.
+    </li>
+    <li>
+      <strong>Verification & Data Use:</strong> Submitted documents (e.g., identification, photographs, verification details) will be utilized exclusively for identity verification, security purposes, and compliance with relevant regulations.
+    </li>
+    <li>
+      <strong>Prohibited Activities:</strong> Any engagement in suspicious, fraudulent, harmful, or illegal activities, including but not limited to hacking, phishing, or spreading malware, will result in immediate account termination and potential legal action.
+    </li>
+    <li>
+      <strong>Platform Monitoring & Improvement:</strong> The platform reserves the right to monitor user progress, activities, and usage patterns to enhance system quality, optimize user experience, and ensure compliance with these terms.
+    </li>
+    <li>
+      <strong>Communication Consent:</strong> By accepting these terms, you grant the platform consent to contact you with essential learning updates, service announcements, and verification requests.
+    </li>
+  </ul>
+  <p>Failure to adhere to these terms may result in restrictions on your account or termination of services.</p>
+</section>
+
+      <!-- Acceptance Trigger: Button to confirm that the user has read and accepted the terms -->
+      <button id="acceptLearnerTerms" class="btn">I Have Read & Accept</button>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * @section Terms & Conditions Logic
+     * @description Ensures the user provides explicit consent before proceeding 
+     * to the learner enrollment form.
+     */
+    
+    // Security: Prevents the user from bypassing the terms by manually navigating back
+    try {
+      // Clear any existing session flag to ensure a fresh acceptance is required
+      sessionStorage.removeItem('nh_terms_confirmed');
+    } catch (_) {
+      // Silently handle cases where sessionStorage might be unavailable
+    }
+
+    /**
+     * @event click
+     * @description Records the user's acceptance in the current session 
+     * and redirects them to the actual learner registration form.
+     */
+    document.getElementById('acceptLearnerTerms').addEventListener('click', () => {
+      try {
+        // Flag the session as 'confirmed' so the enrollment page can proceed
+        sessionStorage.setItem('nh_terms_confirmed', '1');
+      } catch (_) {
+        // Handle potential storage errors
+      }
+
+      // Redirect the user to the next step in the enrollment funnel
+      window.location.href = '/become-learner.html';
+    });
+  </script>
+
+    <script src="footer.js"></script>
+</body>
+</html>

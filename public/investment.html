@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NH Network - Investor Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /**
+     * @section Global Reset and Base Typography
+     * @description Ensures a consistent baseline across all browsers by removing default margins/paddings
+     * and enforcing the "Inter" typeface for a modern, readable interface.
+     */
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      font-family: "Inter", sans-serif; 
+    }
+
+    /**
+     * @section Design Tokens (CSS Variables)
+     * @description Centralized design system constants. Using variables allows for easy theme 
+     * switching and ensures visual consistency across all dashboard components.
+     * The theme follows "Glassmorphism" principles: translucency, blurs, and vibrant accents.
+     */
+    :root {
+      /* Core Backgrounds */
+      --bg-dark: #0f1419;
+      --bg-card: rgba(59, 130, 246, 0.08);
+      --border-color: rgba(59, 130, 246, 0.15);
+      
+      /* Typography Colors */
+      --text-primary: #ffffff;
+      --text-secondary: #cbd5e0;
+      --text-muted: #a0aec0;
+      
+      /* Brand Accents */
+      --accent-blue: #3b82f6;
+      --accent-purple: #8b5cf6;
+      
+      /* Functional Colors */
+      --success: #22c55e;
+      --error: #ef4444;
+      
+      /* Layout Constants */
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.3);
+      --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    /**
+     * @section Body Layout
+     * @description Sets the foundation for the dark theme. The use of 'relative' positioning 
+     * allows for the animated background elements to be placed correctly.
+     */
+    body { 
+      background: #0f1419; 
+      color: var(--text-primary); 
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /**
+     * @section Animated Ambient Background
+     * @description Creates a sophisticated, high-tech atmosphere using multiple radial gradients.
+     * The fixed position ensures the background remains static while content scrolls over it.
+     */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.1), transparent),
+                  radial-gradient(ellipse 80% 80% at 80% 80%, rgba(139, 92, 246, 0.08), transparent);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /**
+     * @section Sticky Topbar Navigation
+     * @description The primary navigation hub. Uses 'backdrop-filter' for a blurred glass effect,
+     * maintaining legibility even as content passes underneath during scroll.
+     */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      width: 100%;
+      padding: 1.5rem 5%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 20, 25, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    /**
+     * @section Brand Identity
+     * @description Logic for the logo and brand name. Includes a subtle hover transition
+     * to provide interactive feedback to the user.
+     */
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .brand:hover {
+      transform: scale(1.02);
+    }
+
+    /**
+     * @section Logo Icon
+     * @description A custom-styled container for the brand mark. Uses a linear gradient 
+     * and overflow management for the shimmer animation.
+     */
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      color: #ffffff;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /**
+     * @section Shimmer Animation
+     * @description Enhances visual interest with a moving light effect across the logo.
+     */
+    .logo-icon::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translate(-100%, -100%) rotate(45deg); }
+      100% { transform: translate(100%, 100%) rotate(45deg); }
+    }
+
+    .logo-text {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /**
+     * @section Navigation Pill Bar
+     * @description A specialized navigation container that groups dashboard views.
+     * The rounded, pill-shaped design follows modern dashboard UX patterns.
+     */
+    .topbar-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(59, 130, 246, 0.08);
+      padding: 0.25rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-link {
+      border: none;
+      background: transparent;
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    /**
+     * @section Active Tab State
+     * @description Visual highlight for the currently active view. Uses a strong gradient
+     * and shadow to stand out against the navigation bar.
+     */
+    .nav-link.active {
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .nav-link:hover:not(.active) {
+      color: var(--text-primary);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /**
+     * @section Primary Button Component
+     * @description The main Call-To-Action (CTA) style for the platform.
+     * Features a hover-induced 'shine' and vertical lift for tactile feedback.
+     */
+    .btn, .icon-btn {
+      border-radius: var(--radius-md);
+      border: none;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 0.85rem 2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    /**
+     * @section Button Shine Effect
+     * @description A decorative light sweep that activates on hover, 
+     * guiding the user's attention to primary actions.
+     */
+    .btn::before, .icon-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn:hover, .icon-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(59, 130, 246, 0.6);
+    }
+
+    .btn:hover::before, .icon-btn:hover::before {
+      left: 100%;
+    }
+
+    /**
+     * @section Secondary Button Variant
+     * @description Used for less critical actions. Features a semi-transparent 
+     * appearance that complements the primary CTA without competing for attention.
+     */
+    .icon-btn.secondary {
+      background: rgba(139, 92, 246, 0.15);
+      color: #e0e7ff;
+      border: 1.5px solid rgba(139, 92, 246, 0.4);
+      backdrop-filter: blur(10px);
+      box-shadow: none;
+    }
+
+    .icon-btn.secondary:hover {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: rgba(139, 92, 246, 0.6);
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+    }
+
+    /**
+     * @section Main Application Container
+     * @description Centered layout wrapper that provides consistent padding 
+     * and a maximum width for optimal readability on wide monitors.
+     */
+    .app-main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 3rem 24px 40px;
+    }
+
+    /**
+     * @section Tab View Management
+     * @description Simple utility classes to toggle the visibility of different 
+     * dashboard panels based on the user's current navigation state.
+     */
+    .tab-panel { display: block; }
+    .tab-panel[hidden] { display: none; }
+
+    /**
+     * @section Page Headers
+     * @description Stylized typography for view titles. Uses gradient masks
+     * to achieve a high-end, futuristic look.
+     */
+    .page-title {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #ffffff 0%, #a0aec0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      line-height: 1.8;
+    }
+
+    /**
+     * @section Metric Display Grid
+     * @description A responsive 4-column grid used to display high-level
+     * financial data like balances and P&L at the top of the dashboard.
+     */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    /**
+     * @section Stat Card Component
+     * @description Individual glassmorphic cards for metrics. Includes an 
+     * inner glow effect and subtle hover elevation.
+     */
+    .stat-card {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.06) 100%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.8rem;
+      backdrop-filter: blur(20px);
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .stat-card:hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      transform: translateY(-8px);
+      box-shadow: 0 20px 50px rgba(59, 130, 246, 0.2);
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #3b82f6;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffffff, #cbd5e0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.6rem;
+      letter-spacing: -1px;
+    }
+
+    .stat-meta {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /**
+     * @section General Content Panel
+     * @description The standard container for major dashboard sections.
+     * Provides a consistent translucent background and blurred backdrop.
+     */
+    .panel {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.06) 100%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      gap: 8px;
+    }
+
+    .panel-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .panel-meta {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /**
+     * @section Two-Column Grid Layout
+     * @description Utility for side-by-side dashboard components, 
+     * automatically adjusting ratios for a balanced look.
+     */
+    .layout-two-column {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.4fr);
+      gap: 2rem;
+      align-items: flex-start;
+      margin-bottom: 3rem;
+    }
+
+    /**
+     * @section Wallet Metric Display
+     * @description Specialized layout for displaying balance data within the wallet view.
+     */
+    .wallet-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .wallet-card-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.5rem;
+    }
+
+    .wallet-card-value {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff, #cbd5e0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .wallet-actions {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .wallet-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr);
+      gap: 2rem;
+      align-items: flex-start;
+    }
+
+    /**
+     * @section Form Components
+     * @description Consistent styling for inputs, selects, and labels.
+     * Features a dark, translucent background to fit the overall aesthetic.
+     */
+    .form-field { margin-bottom: 1rem; }
+    .form-label { 
+      font-size: 13px; 
+      font-weight: 600;
+      color: #e0e7ff; 
+      margin-bottom: 0.7rem; 
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .form-input, .form-select {
+      width: 100%;
+      border-radius: var(--radius-md);
+      border: 1.5px solid rgba(59, 130, 246, 0.25);
+      padding: 1rem 1.2rem;
+      font-size: 14px;
+      color: #ffffff;
+      background: rgba(15, 20, 25, 0.5);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: rgba(15, 20, 25, 0.8);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .form-note {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      line-height: 1.6;
+    }
+
+    /* Color indicators for success/error states */
+    .badge-green { color: #22c55e; }
+    .badge-red { color: #ef4444; }
+
+    /**
+     * @section Data Tables
+     * @description High-tech table design with subtle row hover effects 
+     * and clear column headers for complex data visualization.
+     */
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      font-size: 14px; 
+    }
+    
+    thead { 
+      background: rgba(59, 130, 246, 0.05);
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    th, td { 
+      padding: 1rem; 
+      text-align: left; 
+    }
+    
+    th { 
+      font-size: 12px; 
+      color: #3b82f6; 
+      font-weight: 700; 
+      text-transform: uppercase; 
+      letter-spacing: 1px; 
+    }
+    
+    tbody tr {
+      border-bottom: 1px solid rgba(59, 130, 246, 0.05);
+      transition: all 0.3s ease;
+    }
+    
+    tbody tr:hover { 
+      background: rgba(59, 130, 246, 0.05); 
+    }
+
+    /**
+     * @section UI Chips / Tags
+     * @description Small pill-shaped markers used for coin symbols or statuses.
+     */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      background: rgba(59, 130, 246, 0.1);
+      color: #60a5fa;
+      font-weight: 600;
+    }
+
+    /**
+     * @section Profile View Layout
+     * @description Responsive grid for the investor's profile page.
+     */
+    .profile-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.4fr);
+      gap: 2rem;
+      align-items: flex-start;
+    }
+
+    /**
+     * @section User Avatar
+     * @description Circular profile image or initials placeholder with a gradient background.
+     */
+    .avatar-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      color: #ffffff;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    }
+
+    .profile-name { 
+      font-size: 18px; 
+      font-weight: 700; 
+      color: var(--text-primary); 
+    }
+    
+    .profile-email { 
+      font-size: 14px; 
+      color: var(--text-secondary); 
+    }
+
+    /**
+     * @section Global Footer
+     * @description Minimalist footer containing legal links and copyright info.
+     */
+    footer {
+      text-align: center;
+      padding: 3rem 5%;
+      border-top: 1px solid rgba(59, 130, 246, 0.1);
+      background: rgba(15, 20, 25, 0.5);
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+
+    footer a {
+      color: #3b82f6;
+      text-decoration: none;
+      margin: 0 0.5rem;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    footer a:hover {
+      color: #60a5fa;
+    }
+
+    /**
+     * @section Empty State UI
+     * @description Placeholder displayed when a list or table has no content.
+     */
+    .empty-state {
+      border-radius: var(--radius-lg);
+      border: 2px dashed rgba(59, 130, 246, 0.2);
+      padding: 2rem;
+      font-size: 14px;
+      color: var(--text-muted);
+      background: rgba(59, 130, 246, 0.05);
+      text-align: center;
+    }
+
+    .quick-amounts { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 1rem; 
+      margin-top: 1rem; 
+    }
+    
+    .quick-amounts button { 
+      font-size: 13px; 
+      padding: 0.7rem 1.2rem; 
+    }
+
+    /**
+     * @section Secondary Stats List
+     * @description Grid layout for smaller, auxiliary data points in the profile view.
+     */
+    .stats-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .stats-item {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      background: rgba(59, 130, 246, 0.05);
+      backdrop-filter: blur(10px);
+    }
+
+    .stats-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.5rem;
+    }
+
+    .stats-value {
+      font-size: 18px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #ffffff, #cbd5e0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /**
+     * @section Responsive Design - Tablet View
+     * @description Adjusts layouts to single-column or condensed grids for screen sizes 
+     * below 1024px, ensuring a functional experience on tablets.
+     */
+    @media (max-width: 1024px) {
+      .app-main { padding-inline: 16px; }
+      .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .wallet-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .layout-two-column,
+      .wallet-layout,
+      .profile-layout { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    /**
+     * @section Responsive Design - Mobile View
+     * @description Optimizes the topbar and grid systems for smartphones.
+     * Elements stack vertically to fit narrow viewports.
+     */
+    @media (max-width: 768px) {
+      .topbar {
+        padding-inline: 16px;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+      }
+      .topbar-left { width: 100%; justify-content: space-between; }
+      .topbar-nav { order: 3; width: 100%; justify-content: space-between; }
+      .topbar-right { order: 2; }
+      .stat-grid { grid-template-columns: minmax(0, 1fr); }
+      .wallet-summary-grid { grid-template-columns: minmax(0, 1fr); }
+      .page-title { font-size: 28px; }
+    }
+    /**
+     * @section Onboarding Modal Styles
+     * @description Styles for the investment onboarding strategy selection.
+     */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .onboarding-modal {
+      background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 3rem;
+      max-width: 900px;
+      width: 90%;
+      box-shadow: var(--shadow-strong);
+      text-align: center;
+    }
+    .strategy-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin: 2.5rem 0;
+    }
+    .strategy-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .strategy-card:hover {
+      transform: translateY(-10px);
+      background: rgba(59, 130, 246, 0.1);
+      border-color: var(--accent-blue);
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+    }
+    .strategy-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .strategy-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .simulation-disclaimer {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2rem;
+      padding: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /**
+     * @section Onboarding Dashboard Styles
+     * @description Specific styles for Safe and Risky dashboard paths.
+     */
+    .risk-tag {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .risk-tag.safe { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .risk-tag.risky { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    
+    .projection-table {
+      width: 100%;
+      margin-top: 1.5rem;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+    }
+    .projection-table th { color: var(--text-muted); font-size: 11px; padding: 0.5rem 1rem; }
+    .projection-table td { background: rgba(255, 255, 255, 0.03); padding: 1rem; font-size: 13px; }
+    .projection-table tr td:first-child { border-radius: 8px 0 0 8px; }
+    .projection-table tr td:last-child { border-radius: 0 8px 8px 0; }
+
+    .meme-coin-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .meme-coin-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .entry-input {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      width: 100%;
+    }
+    .warning-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* --- PROFESSIONAL UPGRADE STYLES (Step 3) --- */
+    .disclaimer-banner {
+      background: linear-gradient(90deg, #ef4444 0%, #f97316 100%);
+      color: white;
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+      animation: slideDown 0.5s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .skeleton-loader {
+      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      height: 100px;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .coin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .coin-live-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .coin-live-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent-blue);
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+    }
+
+    .coin-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .coin-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+
+    .coin-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .coin-name {
+      font-weight: 700;
+      font-size: 16px;
+      color: white;
+    }
+
+    .coin-symbol {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .volatility-tag {
+      margin-left: auto;
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .price-section {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* --- ADVANCED INVESTMENT UPGRADE STYLES --- */
+    .investment-plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .premium-plan-card {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .premium-plan-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 4px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+      opacity: 0.5;
+    }
+
+    .premium-plan-card:hover {
+      transform: translateY(-12px);
+      border-color: var(--accent-blue);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.1);
+      background: linear-gradient(145deg, rgba(59, 130, 246, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+    }
+
+    .plan-badge {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .badge-low { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .badge-medium { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    .badge-high { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+    .plan-name {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 0.5rem;
+    }
+
+    .plan-roi {
+      font-size: 42px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #fff 0%, #cbd5e0 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 1rem 0;
+    }
+
+    .plan-roi span {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-muted);
+      -webkit-text-fill-color: var(--text-muted);
+    }
+
+    .plan-features {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 1.5rem;
+    }
+
+    .feature-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .feature-item strong { color: white; }
+
+    .live-pl-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .pl-indicator {
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pl-positive { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .pl-negative { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+    .trading-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 12px;
+    }
+
+    .trading-table tr {
+      background: rgba(255, 255, 255, 0.02);
+      transition: all 0.3s ease;
+    }
+
+    .trading-table tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+      transform: scale(1.005);
+    }
+
+    .trading-table td {
+      padding: 1.2rem 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .trading-table td:first-child { border-left: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px 0 0 12px; }
+    .trading-table td:last-child { border-right: 1px solid rgba(255, 255, 255, 0.05); border-radius: 0 12px 12px 0; }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .chart-container {
+      height: 300px;
+      position: relative;
+    }
+
+    .status-running { color: #3b82f6; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .status-running::before { content: ''; width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; animation: pulse 2s infinite; }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    }
+
+    .current-price {
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+    }
+
+    .price-change {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .text-green { color: #22c55e; }
+    .text-red { color: #ef4444; }
+
+    .sparkline-container {
+      height: 40px;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .last-updated {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .invest-now-btn {
+      width: 100%;
+      margin-top: auto;
+    }
+
+    .modal-content.professional {
+      max-width: 450px;
+      padding: 2.5rem;
+      background: #1a202c;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-header h2 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #ef4444;
+    }
+
+    .modal-body p {
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Skeleton Loading Styles */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .skeleton-text { height: 1rem; margin-bottom: 0.5rem; }
+    .skeleton-title { height: 1.5rem; margin-bottom: 1rem; width: 60%; }
+    .skeleton-avatar { width: 40px; height: 40px; border-radius: 50%; }
+    .skeleton-row { height: 50px; margin-bottom: 8px; border-radius: 8px; }
+
+    /* --- PROFESSIONAL DEPOSIT UPGRADE STYLES --- */
+    .payment-methods-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .payment-method-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .payment-method-card:hover {
+      background: rgba(59, 130, 246, 0.05);
+      border-color: var(--accent-blue);
+      transform: translateY(-5px);
+    }
+
+    .payment-method-card.selected {
+      border-color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.1);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+    }
+
+    .method-icon {
+      font-size: 32px;
+      margin-bottom: 0.75rem;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+
+    .method-name {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 0.5rem;
+      color: white;
+    }
+
+    .method-details {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      word-break: break-all;
+    }
+
+    .upload-box {
+      border: 2px dashed rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .upload-box:hover {
+      border-color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .upload-box.has-file {
+      border-color: var(--success);
+      border-style: solid;
+      background: rgba(34, 197, 94, 0.05);
+    }
+
+    .deposit-status-badge {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-pending { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .status-approved { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .status-rejected { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    /* Toast Styles */
+    .toast {
+      background: rgba(31, 41, 55, 0.95);
+      border-left: 4px solid #3b82f6;
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      min-width: 250px;
+    }
+    .toast-success { border-left-color: #22c55e; }
+    .toast-error { border-left-color: #ef4444; }
+    .toast-content { display: flex; align-items: center; gap: 0.75rem; }
+    .toast-icon { font-size: 18px; }
+    .toast-message { font-size: 14px; font-weight: 500; }
+    .fade-out { animation: fadeOut 0.5s forwards; }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateX(20px); } }
+  </style>
+</head>
+<body>
+<!-- 
+  Topbar Navigation Header
+  Contains the branding/logo, the main single-page application (SPA) navigation menu,
+  and quick access buttons for Home and Logout.
+-->
+<header class="topbar">
+  <!-- Left Section: Branding and Primary Navigation -->
+  <div class="topbar-left">
+    <!-- Brand Identity / Logo -->
+    <a href="/" class="brand" id="logoBrand">
+      <div class="logo-icon">NH</div>
+      <div class="logo-text">NETWORK</div>
+    </a>
+
+    <!-- SPA Navigation Menu: Switches between different dashboard views without reloading -->
+    <nav class="topbar-nav" aria-label="Investor navigation">
+      <button class="nav-link active" data-tab="dashboard">Dashboard</button>
+      <button class="nav-link" data-tab="wallet">Wallet</button>
+      <button class="nav-link" data-tab="investment">Investment</button>
+      <button class="nav-link" data-tab="profit">Profit Ratio</button>
+      <button class="nav-link" data-tab="market">Market Snapshot</button>
+      <button class="nav-link" data-tab="profile">Profile</button>
+    </nav>
+  </div>
+
+  <!-- Right Section: Utility Actions -->
+  <div class="topbar-right">
+    <button class="btn" id="homeBtn">Home</button>
+    <button class="icon-btn secondary" id="logoutBtn">Logout</button>
+  </div>
+</header>
+
+  <!-- Main Application Content Area -->
+  <main class="app-main">
+    
+    <!-- Tab Section: Dashboard (Default View) -->
+    <section class="tab-panel" id="tab-dashboard">
+      <header style="margin-bottom:16px;">
+        <h1 class="page-title">Investor Dashboard</h1>
+        <p class="page-subtitle">Overview of your wallet, positions and the live crypto market.</p>
+      </header>
+
+      <!-- High-Level Financial Metrics Grid -->
+      <section class="stat-grid" aria-label="Key investor stats">
+        <!-- Wallet Balance: Funds available for immediate investment or withdrawal -->
+        <article class="stat-card">
+          <div class="stat-label">Wallet Balance</div>
+          <div class="stat-value" id="statWalletBalance">$0.00</div>
+          <div class="stat-meta">Available to invest or withdraw</div>
+        </article>
+        <!-- Total Invested: Historical cost basis of all current positions -->
+        <article class="stat-card">
+          <div class="stat-label">Total Invested</div>
+          <div class="stat-value" id="statInvested">$0.00</div>
+          <div class="stat-meta">Capital currently allocated</div>
+        </article>
+        <!-- Current Value: Real-time market valuation of all positions -->
+        <article class="stat-card">
+          <div class="stat-label">Current Value</div>
+          <div class="stat-value" id="statCurrent">$0.00</div>
+          <div class="stat-meta">Mark-to-market valuation</div>
+        </article>
+        <!-- Profit / Loss: Difference between current value and total invested -->
+        <article class="stat-card">
+          <div class="stat-label">Live Profit / Loss</div>
+          <div class="stat-value" id="statPnL">$0.00</div>
+        </article>
+        <!-- Total Deposited: Aggregate of all funding transactions -->
+        <article class="stat-card">
+          <div class="stat-label">Total Deposited</div>
+          <div class="stat-value" id="statTotalDeposited">$0.00</div>
+          <div class="stat-meta">Lifetime deposits</div>
+        </article>
+        <!-- Total Withdrawn: Aggregate of all withdrawal transactions -->
+        <article class="stat-card">
+          <div class="stat-label">Total Withdrawn</div>
+          <div class="stat-value" id="statTotalWithdrawn">$0.00</div>
+          <div class="stat-meta">Lifetime withdrawals</div>
+        </article>
+      </section>
+
+      <!-- Dashboard Layout: Two columns for Wallet and Market summaries -->
+      <section class="layout-two-column">
+        <!-- Wallet Snapshot: Quick overview of available cash and recent actions -->
+        <article class="panel" aria-label="Wallet summary">
+          <div class="panel-header">
+            <h2 class="panel-title">Wallet Snapshot</h2>
+            <p class="panel-meta">Live balance & cashflows</p>
+          </div>
+          <div class="wallet-summary-grid">
+            <div>
+              <p class="wallet-card-label">Available Balance</p>
+              <p class="wallet-card-value" id="walletAvailable">$0.00</p>
+            </div>
+            <div>
+              <p class="wallet-card-label">Total Deposited</p>
+              <p class="wallet-card-value" id="walletDeposited">$0.00</p>
+            </div>
+            <div>
+              <p class="wallet-card-label">Total Withdrawn</p>
+              <p class="wallet-card-value" id="walletWithdrawn">$0.00</p>
+            </div>
+          </div>
+          <!-- Quick Action Buttons for the Wallet -->
+          <div class="wallet-actions">
+            <button class="btn" data-open-wallet-action="deposit">Deposit</button>
+            <button class="icon-btn secondary" data-open-wallet-action="withdraw">Withdraw</button>
+          </div>
+          <p class="form-note">Use the Wallet tab for detailed actions and history.</p>
+        </article>
+
+        <!-- Live Market Overview: Real-time price updates for top crypto assets -->
+        <article class="panel" aria-label="Live market overview">
+          <div class="panel-header">
+            <h2 class="panel-title">Live Market Overview</h2>
+            <p class="panel-meta">Top coins, updated in real-time</p>
+          </div>
+          <div id="dashboardMarket">
+            <div class="empty-state">Loading live market data...</div>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <!-- Tab Section: Wallet Management -->
+    <section class="tab-panel" id="tab-wallet" hidden>
+      <header style="margin-bottom:16px;">
+        <h1 class="page-title">Wallet</h1>
+        <p class="page-subtitle">Deposit, withdraw and manage your available balance.</p>
+      </header>
+      <section class="panel">
+        <!-- Redundant summary for context within the wallet view -->
+        <div class="wallet-summary-grid">
+          <div>
+            <p class="wallet-card-label">Available Balance</p>
+            <p class="wallet-card-value" id="walletAvailable2">$0.00</p>
+          </div>
+          <div>
+            <p class="wallet-card-label">Total Deposited</p>
+            <p class="wallet-card-value" id="walletDeposited2">$0.00</p>
+          </div>
+          <div>
+            <p class="wallet-card-label">Total Withdrawn</p>
+            <p class="wallet-card-value" id="walletWithdrawn2">$0.00</p>
+          </div>
+        </div>
+        <!-- Wallet View Layout: Forms on the left, Notes on the right -->
+        <div class="wallet-layout" style="margin-top:12px;">
+          <div>
+            <!-- Toggle buttons for different wallet operations -->
+            <div class="wallet-actions">
+              <button class="btn" data-wallet-tab="deposit">Deposit</button>
+              <button class="icon-btn secondary" data-wallet-tab="withdraw">Withdraw</button>
+            </div>
+            <!-- Dynamic container where Deposit/Withdrawal forms are injected via JS -->
+            <div id="walletForms"></div>
+            
+            <!-- Transaction Log Panel -->
+            <div class="panel" style="margin-top:12px;">
+              <div class="panel-header">
+                <h2 class="panel-title">Transaction History</h2>
+                <p class="panel-meta">Most recent activity</p>
+              </div>
+              <div id="transactionsTable"><div class="empty-state">Loading transactions...</div></div>
+            </div>
+          </div>
+          <!-- Side Note Panel: Important policy information for the investor -->
+          <div>
+            <div class="panel-header" style="margin-bottom:6px;">
+              <h2 class="panel-title">Notes</h2>
+              <p class="panel-meta">Before you move money</p>
+            </div>
+            <ul class="form-note" style="list-style: disc; padding-left:18px;">
+              <li>Withdrawals apply a <strong>1% fee automatically</strong>. The fee is shown before confirmation.</li>
+              <li>Deposits are verified by admin. Connect real gateways in production for live payments.</li>
+              <li>All wallet changes are stored in the database so your balance is persistent.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- Tab Section: Investment Portfolio Breakdown -->
+    <section class="tab-panel" id="tab-investment" hidden>
+      <header style="margin-bottom:16px;">
+        <h1 class="page-title">Investment Portfolio</h1>
+        <p class="page-subtitle">Binance-style view of your positions, values and P&amp;L.</p>
+      </header>
+      <!-- Real-time portfolio valuation summary -->
+      <section class="panel" style="margin-bottom:16px;">
+        <div class="wallet-summary-grid">
+          <div>
+            <p class="wallet-card-label">Amount Invested</p>
+            <p class="wallet-card-value" id="investAmount">$0.00</p>
+          </div>
+          <div>
+            <p class="wallet-card-label">Current Value</p>
+            <p class="wallet-card-value" id="investCurrent">$0.00</p>
+          </div>
+          <div>
+            <p class="wallet-card-label">Profit / Loss</p>
+            <p class="wallet-card-value" id="investPnL">$0.00</p>
+            <p class="form-note" id="investPnLPercent">0.00%</p>
+          </div>
+        </div>
+      </section>
+      <!-- Detailed table of individual asset holdings -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Your Active Positions</h2>
+          <p class="panel-meta">Professional-grade tracking with real-time analytics</p>
+        </div>
+        <div id="positionsTable">
+          <div class="empty-state">No investments yet. Select a plan above to start building your portfolio.</div>
+        </div>
+      </section>
+    </section>
+
+    <!-- Tab Section: Profit Visualization (Chart) -->
+    <section class="tab-panel" id="tab-profit" hidden>
+      <header style="margin-bottom:16px;">
+        <h1 class="page-title">Advanced Analytics</h1>
+        <p class="page-subtitle">Visual performance metrics and portfolio growth tracking.</p>
+      </header>
+      
+      <div class="analytics-grid">
+        <!-- Portfolio Allocation (Doughnut) -->
+        <article class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Asset Allocation</h2>
+            <p class="panel-meta">Portfolio diversification breakdown</p>
+          </div>
+          <div class="chart-container">
+            <canvas id="assetDistributionChart"></canvas>
+          </div>
+        </article>
+
+        <!-- Profit / Loss Trend (Line Chart) -->
+        <article class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Growth Trend</h2>
+            <p class="panel-meta">Portfolio value over time</p>
+          </div>
+          <div class="chart-container">
+            <canvas id="portfolioGrowthChart"></canvas>
+          </div>
+        </article>
+      </div>
+
+      <section class="panel" style="margin-top: 2rem;">
+        <div class="panel-header">
+          <h2 class="panel-title">Performance Metrics</h2>
+          <p class="panel-meta">Historical profit and loss analysis</p>
+        </div>
+        <div class="chart-container" style="height: 350px;">
+          <canvas id="profitHistoryChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Investment Breakdown Section (Added for multiple investments) -->
+      <section class="panel" style="margin-top: 2rem;">
+        <div class="panel-header">
+          <h2 class="panel-title">Investment Breakdown</h2>
+          <p class="panel-meta">Detailed status of all your active positions</p>
+        </div>
+        <div id="profitBreakdownTable">
+          <div class="empty-state">No investments to show.</div>
+        </div>
+      </section>
+    </section>
+
+    <!-- Tab Section: Global Market Snapshot -->
+    <section class="tab-panel" id="tab-market" hidden>
+      <header style="margin-bottom:16px;">
+        <h1 class="page-title">Market Snapshot</h1>
+        <p class="page-subtitle">Live list of coins with price, 24h change and market cap.</p>
+      </header>
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Live Market</h2>
+          <p class="panel-meta">Auto-refreshing; search and currency switcher</p>
+        </div>
+        <!-- Market Controls: Search filter, Currency switcher, and Pagination -->
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:15px; align-items: center;">
+          <div style="display:flex; gap:8px; flex-grow:1; max-width:400px;">
+            <input class="form-input" id="marketSearch" placeholder="Search coin by name or symbol..." style="margin-bottom:0;" />
+            <button class="btn" id="marketSearchBtn" style="padding: 0.5rem 1rem; min-width: 80px; background: var(--accent-blue);">Search</button>
+          </div>
+          <select class="form-select" id="marketCurrency" style="max-width:120px; margin-bottom:0;">
+            <option value="usd">USD ($)</option>
+            <option value="pkr">PKR (₨)</option>
+          </select>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button class="icon-btn secondary" id="marketPrev" style="margin-bottom:0;">Prev</button>
+            <button class="icon-btn secondary" id="marketNext" style="margin-bottom:0;">Next</button>
+          </div>
+        </div>
+        <!-- Market Data Table Container -->
+        <div id="marketTable">
+          <div class="market-skeleton">
+            <div class="skeleton skeleton-row"></div>
+            <div class="skeleton skeleton-row"></div>
+            <div class="skeleton skeleton-row"></div>
+            <div class="skeleton skeleton-row"></div>
+            <div class="skeleton skeleton-row"></div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- Tab Section: Investor Identity / Profile -->
+    <section class="tab-panel" id="tab-profile" hidden>
+      <header style="margin-bottom:24px;">
+        <!-- Page Title and Subtitle -->
+        <h1 class="page-title">Investor Profile</h1>
+        <p class="page-subtitle">Your approved investor information and account security settings.</p>
+      </header>
+
+      <!-- Main Profile Content Grid -->
+      <div class="profile-layout" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        
+        <!-- Left Side: Profile Information Card -->
+        <section class="panel">
+          <div class="panel-header">
+            <!-- Section Title -->
+            <h2 class="panel-title">Personal Information</h2>
+            <p class="panel-meta">Verified investor details</p>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center;">
+            <!-- Profile Image Display: Correctly fetches the uploaded avatar (Step 3.3 Fix) -->
+            <img id="investorSelfie" alt="Profile Image" style="width:160px; height:160px; border-radius:50%; background:#1f2937; border:4px solid rgba(59,130,246,0.3); object-fit:cover; box-shadow: 0 8px 32px rgba(0,0,0,0.4);" />
+            
+            <!-- Data Grid: Modern read-only layout for personal details -->
+            <div style="width: 100%; display: grid; grid-template-columns: 1fr; gap: 1rem;">
+              <!-- Full Name Field -->
+              <div class="stats-item">
+                <span class="stats-label">Full Name</span>
+                <div id="cardFullName" class="stats-value" style="font-size: 16px;">-</div>
+              </div>
+              
+              <!-- Email Address Field -->
+              <div class="stats-item">
+                <span class="stats-label">Email Address</span>
+                <div id="cardEmail" class="stats-value" style="font-size: 16px;">-</div>
+              </div>
+              
+              <!-- Phone Number Field -->
+              <div class="stats-item">
+                <span class="stats-label">Phone Number</span>
+                <div id="cardPhone" class="stats-value" style="font-size: 16px;">-</div>
+              </div>
+              
+              <!-- Government ID (CNIC) Field -->
+              <div class="stats-item">
+                <span class="stats-label">Government ID (CNIC)</span>
+                <div id="cardCnic" class="stats-value" style="font-size: 16px;">-</div>
+              </div>
+              
+              <!-- Residential Address Field -->
+              <div class="stats-item">
+                <span class="stats-label">Residential Address</span>
+                <div id="cardAddress" class="stats-value" style="font-size: 16px; line-height: 1.5;">-</div>
+              </div>
+            </div>
+            
+            <!-- Read-only Status Banner -->
+            <div id="profileReadonlyBanner" class="status-banner" style="margin-top:12px; font-size: 13px; color: var(--text-muted); background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2); width: 100%; text-align: center;">
+              Your investor profile is verified. These details are read-only.
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Side: Account Security Section -->
+        <section class="panel">
+          <div class="panel-header">
+            <!-- Section Title -->
+            <h2 class="panel-title">Account Security</h2>
+            <p class="panel-meta">Manage your security credentials</p>
+          </div>
+
+          <!-- New Feature: Update Payment Password -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="security-card" style="background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 12px; padding: 1.5rem;">
+              <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 0.5rem; color: #8b5cf6;">Change Your Payment Password</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem;">This password is required for all financial transactions like deposits and withdrawals.</p>
+              
+              <!-- Display Current Password -->
+              <div style="background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: var(--text-muted); font-size: 13px;">Current Payment Password:</span>
+                  <span id="currentPaymentPwd" style="color: #fff; font-weight: 700; letter-spacing: 2px; font-family: monospace; font-size: 16px;">123456</span>
+                </div>
+              </div>
+
+              <!-- Password Input Field -->
+              <div class="form-field">
+                <label class="form-label" for="newPaymentPassword">New Payment Password</label>
+                <input class="form-input" id="newPaymentPassword" type="text" placeholder="Enter new 6-digit password" maxlength="6" />
+              </div>
+              
+              <!-- Update Button: Triggers the backend API call -->
+              <button class="btn" id="updatePaymentPwdBtn" style="width: 100%; margin-top: 0.5rem; background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);">Update Password</button>
+            </div>
+            
+            <!-- Security Note -->
+            <div class="form-note" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 12px; padding: 1rem; display: flex; gap: 12px; align-items: flex-start;">
+              <span style="font-size: 20px;">⚠️</span>
+              <div>
+                <p style="font-weight: 600; color: #f59e0b; font-size: 13px; margin-bottom: 4px;">Security Tip</p>
+                <p style="font-size: 12px; line-height: 1.5;">Never share your payment password with anyone. NH Network staff will never ask for your password.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <!-- 
+    Investment Strategy Selection Modal (Onboarding Flow)
+    Shown to first-time investors to help them choose between Safe and Risky strategies.
+    Part of the Step 3.B Core Implementation.
+  -->
+  <div id="onboardingModal" class="modal-overlay" style="display: none;">
+    <div class="onboarding-modal">
+      <h2 class="page-title" style="font-size: 32px;">Choose Your Investment Strategy</h2>
+      <p class="page-subtitle">Select the approach that best matches your financial goals.</p>
+      
+      <div class="strategy-cards">
+        <!-- Option A: Risk-Averse Path -->
+        <div class="strategy-card" onclick="selectStrategy('safe')">
+          <div class="logo-icon" style="background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);">🛡️</div>
+          <h3 class="strategy-title">Safe & Stable</h3>
+          <p class="strategy-desc">Are you afraid of losing money and prefer a risk-free, stable profit?</p>
+          <button class="btn" style="background: #22c55e; margin-top: auto;">Select Safe Path</button>
+        </div>
+        
+        <!-- Option B: Risk-Tolerant Path -->
+        <div class="strategy-card" onclick="selectStrategy('risky')">
+          <div class="logo-icon" style="background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);">🚀</div>
+          <h3 class="strategy-title">High Growth</h3>
+          <p class="strategy-desc">Are you looking for higher returns and comfortable with high-risk, volatile assets?</p>
+          <button class="btn" style="background: #ef4444; margin-top: auto;">Select Growth Path</button>
+        </div>
+      </div>
+      
+      <!-- Mandatory Simulation Disclaimer (Step 3.B.3) -->
+      <div class="simulation-disclaimer">
+        ⚠️ <strong>VIRTUAL SIMULATION:</strong> This is a virtual simulation for educational purposes only. Not financial advice. All returns and risks shown are simulated.
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 NH Network. All Rights Reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> | <a href="#">Contact Support</a></p>
+  </footer>
+
+  <!-- Loads Chart.js library for creating dynamic and interactive charts on the webpage. -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="notifications.js"></script>
+  <script>
+    if (window.NHNotifications) {
+      NHNotifications.init({ hostSelector: '.topbar-right' });
+    }
+  </script>
+  <script src="investment.js"></script>
+  <script src="footer.js"></script>
+</body>
+</html>

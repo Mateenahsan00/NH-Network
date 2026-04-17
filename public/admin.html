@@ -1,0 +1,1961 @@
+<!--
+  NH Network - Admin Dashboard (admin.html)
+  
+  This is the main administrative interface for the NH Network platform.
+  It provides tools for:
+  - User management (viewing, deleting, downloading profiles)
+  - Learning progress tracking
+  - Learner request approval/rejection
+  - Investor verification and document review
+  - Certificate issuance management
+  
+  Design Strategy:
+  - Single Page Application (SPA) architecture using hidden sections.
+  - Dark-themed modern UI with glassmorphism effects.
+  - Secure entry via an admin authentication modal.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NH Network - Admin</title>
+  
+  <!-- Fonts: Inter for UI and Montserrat for headings -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- jsPDF: Client-side PDF generation for user profiles -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <style>
+    /* 
+      ==========================================================================
+      GLOBAL STYLES & DESIGN TOKENS
+      ==========================================================================
+      The design follows a "Glassmorphism" aesthetic, characterized by 
+      translucent backgrounds, subtle borders, and layered shadows to create
+      a sense of depth. Dark mode is the primary theme for admin clarity.
+    */
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Inter", sans-serif; }
+    
+    /* 
+       CSS Variables (Design Tokens):
+       Centralizing colors, spacing, and effects for easier maintenance 
+       and consistent visual language across the administrative dashboard.
+    */
+    :root { 
+      --bg-dark:#0f1419;           /* Deep dark background for high contrast */
+      --bg-card:rgba(59,130,246,0.08); /* Translucent blue for card surfaces */
+      --border-color:rgba(59,130,246,0.15); /* Soft border to define boundaries */
+      --text-primary:#fff;         /* Pure white for primary readability */
+      --text-secondary:#cbd5e0;    /* Muted gray for secondary descriptions */
+      --text-muted:#a0aec0;        /* Subtle gray for less important labels */
+      --accent-blue:#3b82f6;       /* Vibrant blue for primary actions */
+      --accent-purple:#8b5cf6;     /* Purple for secondary accents/gradients */
+      --success:#22c55e;           /* Standard green for approvals */
+      --error:#ef4444;             /* Standard red for rejections/errors */
+      --radius-lg:16px;            /* Large radius for modern, friendly cards */
+      --radius-md:10px;            /* Medium radius for buttons and inputs */
+      --shadow-soft:0 8px 32px rgba(0,0,0,0.3); /* Soft shadow for elevation */
+    }
+
+    body { 
+      background: var(--bg-dark); 
+      color: var(--text-primary); 
+      overflow-x:hidden; 
+      min-height:100vh; 
+      position:relative; 
+    }
+    
+    /* 
+       Decorative background gradients:
+       Uses non-interactable pseudo-elements to create a modern visual depth 
+       without adding extra DOM nodes.
+    */
+    body::before { 
+      content:''; 
+      position:fixed; 
+      inset:0; 
+      background: 
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59,130,246,0.1), transparent), 
+        radial-gradient(ellipse 80% 80% at 80% 80%, rgba(139,92,246,0.08), transparent); 
+      pointer-events:none; 
+      z-index:-1; 
+    }
+    
+    /* 
+       Sticky Navigation Header:
+       Uses backdrop-filter for the "frosted glass" effect, keeping the
+       main navigation accessible while scrolling.
+    */
+    header { 
+      position: sticky; 
+      top:0; 
+      z-index:10; 
+      width:100%; 
+      padding:1.5rem 5%; 
+      display:flex; 
+      align-items:center; 
+      justify-content:space-between; 
+      background:rgba(15,20,25,0.8); 
+      backdrop-filter: blur(20px); 
+      border-bottom:1px solid rgba(59,130,246,0.1); 
+      box-shadow: var(--shadow-soft); 
+    }
+    
+    /* Branding: NH Network Logo styling with dynamic gradients */
+    .brand { display:inline-flex; align-items:center; gap:1rem; text-decoration:none; }
+    .logo-icon { 
+      width:48px; height:48px; border-radius:12px; 
+      background:linear-gradient(135deg,#3b82f6 0%, #8b5cf6 100%); 
+      display:flex; align-items:center; justify-content:center; 
+      font-weight:800; font-size:20px; color:#fff; 
+      box-shadow:0 8px 24px rgba(59,130,246,0.3); 
+    }
+    .logo-text { 
+      font-size:14px; font-weight:700; letter-spacing:1px; 
+      background: linear-gradient(135deg,#3b82f6,#8b5cf6); 
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; 
+      background-clip:text; 
+    }
+    
+    /* Layout Containers: Centered and responsive */
+    .app-main { max-width: 1100px; margin: 0 auto; padding: 3rem 24px 40px; }
+    .page-title { 
+      font-size:32px; font-weight:800; letter-spacing:-0.5px; margin-bottom:0.5rem; 
+      background: linear-gradient(135deg, #ffffff 0%, #a0aec0 100%); 
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; 
+      background-clip:text; 
+    }
+    .page-subtitle { font-size:16px; color: var(--text-secondary); margin-bottom: 1.5rem; }
+    
+    /* Panels: The primary container for data tables and filters */
+    .panel { 
+      background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.06) 100%); 
+      border:1px solid var(--border-color); 
+      border-radius:var(--radius-lg); 
+      padding: 1.5rem; 
+      backdrop-filter: blur(20px); 
+      box-shadow: var(--shadow-soft); 
+    }
+    
+    /* Table styling for dense data presentation */
+    table { width:100%; border-collapse: collapse; font-size:14px; }
+    thead { background: rgba(59,130,246,0.05); border-bottom: 1px solid var(--border-color); }
+    th, td { padding: 0.9rem; text-align: left; vertical-align: top; }
+    th { 
+      font-size:12px; color:#3b82f6; font-weight:700; 
+      text-transform:uppercase; letter-spacing:1px; 
+    }
+    tbody tr { border-bottom: 1px solid rgba(59,130,246,0.05); }
+    
+    /* Buttons: Uses vibrant gradients and subtle hover transforms for interactivity */
+    .btn { 
+      border:none; border-radius: var(--radius-md); 
+      background: linear-gradient(135deg,#3b82f6 0%, #8b5cf6 100%); 
+      color:#fff; font-weight:600; font-size:13px; 
+      padding:0.6rem 1rem; cursor:pointer; 
+      transition: all 0.3s ease; 
+      box-shadow: 0 4px 20px rgba(59,130,246,0.4); 
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn.secondary { 
+      background: rgba(139,92,246,0.15); color:#e0e7ff; 
+      border:1.5px solid rgba(139,92,246,0.4); box-shadow:none; 
+    }
+    
+    /* UI Components: Status indicators and thumbnails */
+    .chip { 
+      display:inline-flex; align-items:center; gap:4px; 
+      padding:4px 10px; border-radius:999px; font-size:11px; 
+      border:1px solid rgba(59,130,246,0.3); 
+      background: rgba(59,130,246,0.1); color:#60a5fa; 
+      font-weight:600; 
+    }
+    .img-thumb { 
+      width: 64px; height: 64px; border-radius: 8px; 
+      object-fit: cover; border: 1px solid rgba(59,130,246,0.2); 
+    }
+    .row-highlight { 
+      background: rgba(59,130,246,0.12); 
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.35) inset; 
+    }
+    
+    /* Modal System: Fixed position overlays for detailed views and forms */
+    .modal { 
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); 
+      display: none; justify-content: center; align-items: center; 
+      z-index: 100; padding: 16px; backdrop-filter: blur(8px); 
+    }
+    .modal-open { display: flex; }
+    .modal-content { 
+      background: linear-gradient(135deg, rgba(20,28,35,0.95) 0%, rgba(30,40,50,0.95) 100%); 
+      border: 1px solid rgba(59,130,246,0.2); 
+      padding: 2rem; border-radius: 20px; 
+      width: 100%; max-width: 720px; 
+      position: relative; 
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5); 
+    }
+    .modal-title { 
+      font-size: 24px; font-weight: 800; margin-bottom: 0.75rem; 
+      color: #ffffff; display: flex; align-items: center; gap: 10px; 
+    }
+    
+    /* Form elements within modals and search panels */
+    .form-grid { display: flex; flex-direction: column; gap: 1rem; }
+    .field-label { 
+      font-size: 13px; font-weight: 600; color: #e0e7ff; 
+      text-transform: uppercase; letter-spacing: 0.5px; 
+    }
+    .field-input { 
+      padding: 1rem 1.2rem; 
+      border: 1.5px solid rgba(59,130,246,0.25); 
+      border-radius: 10px; font-size: 14px; 
+      background: rgba(15,20,25,0.5); color: #ffffff; 
+      backdrop-filter: blur(10px); transition: all 0.3s ease; 
+    }
+    .field-input:focus { 
+      outline: none; border-color: #3b82f6; 
+      background: rgba(15,20,25,0.8); 
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2); 
+    }
+    
+    /* Status banners for validation feedback */
+    .status-banner { 
+      display: none; font-size: 13px; border-radius: 999px; 
+      padding: 1rem 1.2rem; margin-top: 0.5rem; 
+      align-items: center; gap: 0.75rem; 
+      background: rgba(239,68,68,0.15); color: #fca5a5; 
+      border: 1px solid rgba(239,68,68,0.3); 
+    }
+    .status-banner.visible { display: flex; }
+    
+    /* Utility form controls for search panels */
+    .form-input, .form-select { 
+      border-radius: 10px; border: 1.5px solid rgba(59,130,246,0.25); 
+      padding: 0.85rem 1rem; font-size: 14px; color: #fff; 
+      background: rgba(15,20,25,0.5); backdrop-filter: blur(10px); 
+      transition: all 0.3s ease; 
+    }
+    .form-input:focus, .form-select:focus { 
+      outline: none; border-color: #3b82f6; 
+      background: rgba(15,20,25,0.8); 
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2); 
+    }
+
+    /* Deposit Status Badges */
+    .deposit-status-badge {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-pending { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .status-approved { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .status-rejected { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+  </style>
+</head>
+<body>
+  <!-- Header: Application Navigation and Branding -->
+  <header hidden>
+    <a href="/" class="brand" id="logoBrand">
+      <div class="logo-icon">NH</div>
+      <div class="logo-text">NETWORK</div>
+    </a>
+    <nav style="display:flex; gap:10px; align-items:center;">
+      <button class="btn" data-tab="users">Users</button>
+      <button class="btn" data-tab="learners">Learners</button>
+      <button class="btn" data-tab="investors">Investors</button>
+      <button class="btn" data-tab="deposits">Deposits</button>
+      <button class="btn" data-tab="withdrawals">Withdrawals</button>
+      <button class="btn" data-tab="certificates">Certificates</button>
+      <button class="btn" id="adminRefreshBtn" style="margin-left:12px;">Refresh</button>
+    </nav>
+  </header>
+
+  <!-- Main Content: Dynamic Section Container -->
+  <main class="app-main" hidden>
+    
+    <!-- Section: User Management -->
+    <section id="section-users" style="display:block;">
+      <h1 class="page-title">Users</h1>
+      <p class="page-subtitle">Manage registered users and view their learning progress.</p>
+      
+      <!-- User Search & Filtering Panel -->
+      <div class="panel" style="margin-bottom:1rem; display:flex; gap:10px; align-items:center;">
+        <input id="userSearchInput" class="form-input" placeholder="Search..." style="flex:1;" />
+        <select id="userSearchFilter" class="form-select" style="width:220px;">
+          <option value="name">Name</option>
+          <option value="email">Email</option>
+          <option value="username">Username</option>
+          <option value="phone">Phone</option>
+        </select>
+        <button class="btn" id="userSearchBtn">Search</button>
+      </div>
+      
+      <!-- Users Data Table -->
+      <div class="panel">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Full Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Account Type</th>
+                <th>Status</th>
+                <th>Registered</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersBody">
+              <tr><td colspan="10" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Certificate Management -->
+    <section id="section-certificates" style="display:none;">
+      <h1 class="page-title">Certificate Management</h1>
+      <p class="page-subtitle">Review and manage user certificate requests.</p>
+      <div class="panel">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>User Name</th>
+                <th>Course ID</th>
+                <th>Request Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="certificatesBody">
+              <tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Learner Requests Review -->
+    <section id="section-learners" style="display:none;">
+      <h1 class="page-title">Learners</h1>
+      <p class="page-subtitle">Review, approve or not approve user requests to access learning.</p>
+      
+      <!-- Learner Search & Status Filtering -->
+      <div class="panel" style="margin-bottom:1rem; display:flex; gap:10px; align-items:center;">
+        <input id="learnerSearchInput" class="form-input" placeholder="Search learners..." style="flex:1;" />
+        <select id="learnerSearchFilter" class="form-select" style="width:200px;">
+          <option value="name">Name</option>
+          <option value="email">Email</option>
+          <option value="username">Username</option>
+        </select>
+        <select id="learnerStatusFilter" class="form-select" style="width:200px;">
+          <option value="all" selected>All</option>
+          <option value="approved">Approved</option>
+          <option value="not_approved">Not Approved</option>
+          <option value="pending">Pending</option>
+        </select>
+        <button class="btn" id="learnerSearchBtn">Filter</button>
+      </div>
+      
+      <div class="panel">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Gmail</th>
+                <th>Username</th>
+                <th>Phone</th>
+                <th>Selected Course</th>
+                <th>Education Level</th>
+                <th>Image</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="requestsBody">
+              <tr><td colspan="9" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Investor Requests Review -->
+    <section id="section-investors" style="display:none;">
+      <h1 class="page-title">Investors</h1>
+      <p class="page-subtitle">Review, approve or not approve investor access requests.</p>
+      
+      <!-- Investor Search & Status Filtering -->
+      <div class="panel" style="margin-bottom:1rem; display:flex; gap:10px; align-items:center;">
+        <input id="investorSearchInput" class="form-input" placeholder="Search investors..." style="flex:1;" />
+        <select id="investorSearchFilter" class="form-select" style="width:200px;">
+          <option value="name">Name</option>
+          <option value="email">Email</option>
+          <option value="phone">Phone</option>
+          <option value="cnic">CNIC</option>
+        </select>
+        <select id="investorStatusFilter" class="form-select" style="width:200px;">
+          <option value="all" selected>All</option>
+          <option value="approved">Approved</option>
+          <option value="not_approved">Not Approved</option>
+          <option value="pending">Pending</option>
+        </select>
+        <button class="btn" id="investorSearchBtn">Filter</button>
+      </div>
+      
+      <div class="panel">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Username</th>
+                <th>Phone</th>
+                <th>CNIC</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="investorsBody">
+              <tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Deposit Requests -->
+    <section id="section-deposits" style="display:none;">
+      <h1 class="page-title">Deposit Requests</h1>
+      <p class="page-subtitle">Manually verify and approve user deposits.</p>
+      
+      <div class="panel">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Sender Details</th>
+                <th>Screenshot</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="depositsBody">
+              <tr><td colspan="8" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Withdrawal Requests -->
+    <section id="section-withdrawals" style="display:none;">
+      <h1 class="page-title">Withdrawal Requests</h1>
+      <p class="page-subtitle">Review and process user withdrawal requests.</p>
+      
+      <div class="panel">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Amount / Fee</th>
+                <th>Net to Send</th>
+                <th>Method</th>
+                <th>Account Details</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="withdrawalsBody">
+              <tr><td colspan="8" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 
+    AUTHENTICATION OVERLAY
+    ----------------------
+    This modal is the first thing a user sees. It prevents unauthorized access
+    to the admin panel by requiring credentials before displaying any data.
+    The 'hidden' attribute on <header> and <main> ensures content is leaked
+    before successful authentication.
+  -->
+  <div class="modal" id="adminAuthModal" aria-hidden="true" role="dialog">
+    <div class="modal-content" style="max-width:420px;">
+      <h2 class="modal-title">Admin Access</h2>
+      <form id="adminAuthForm" autocomplete="off">
+        <div class="form-grid">
+          <div class="field">
+            <label class="field-label" for="adminUser">Admin Username</label>
+            <input type="text" id="adminUser" class="field-input"  />
+          </div>
+          <div class="field">
+            <label class="field-label" for="adminPass">Admin Password</label>
+            <input type="password" id="adminPass" class="field-input" />
+          </div>
+        </div>
+        <button type="submit" class="btn" style="width:100%; margin-top: 1rem;">Enter Dashboard</button>
+        <div id="adminAuthError" class="status-banner" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 
+    MESSAGING MODAL
+    ---------------
+    A shared utility modal used to send feedback to users when their 
+    Learner or Investor applications are approved or rejected.
+  -->
+  <div class="modal" id="messageModal" aria-hidden="true" role="dialog">
+    <div class="modal-content" style="max-width:420px;">
+      <button type="button" id="messageCloseBtn" class="btn secondary" style="position:absolute; right:12px; top:12px; padding:6px 10px;">✖</button>
+      <h2 class="modal-title" id="messageModalTitle">Send Message</h2>
+      <form id="messageForm" autocomplete="off">
+        <div class="form-grid">
+          <textarea id="messageText" class="field-input" rows="5" placeholder="Explain the reason for approval/rejection..."></textarea>
+        </div>
+        <button type="submit" class="btn" style="width:100%; margin-top: 1rem;" id="messageSendBtn">Send Notification</button>
+        <div id="messageError" class="status-banner" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 
+    USER DETAIL MODAL
+    -----------------
+    Displays full information about a specific user in a professional structured format.
+  -->
+  <div class="modal" id="userDetailModal" aria-hidden="true" role="dialog">
+    <div class="modal-content" style="max-width: 800px;">
+      <button type="button" id="userDetailCloseBtn" class="btn secondary" style="position:absolute; right:12px; top:12px; padding:6px 10px;">✖</button>
+      <h2 class="modal-title">Comprehensive User Profile</h2>
+      <div id="userDetailBody" style="max-height:75vh; overflow:auto;">
+        <div style="text-align:center; padding: 2rem;">Loading user information...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 
+    INVESTOR DETAIL MODAL
+    ---------------------
+    Displays the full verification profile of an investor, including high-res
+    images of their CNIC, live selfie, and a verification video.
+  -->
+  <div class="modal" id="investorDetailModal" aria-hidden="true" role="dialog">
+    <div class="modal-content">
+      <button type="button" id="investorDetailCloseBtn" class="btn secondary" style="position:absolute; right:12px; top:12px; padding:6px 10px;">✖</button>
+      <h2 class="modal-title">Investor Verification Profile</h2>
+      <div id="investorDetailBody" style="max-height:70vh; overflow:auto; display:flex; flex-direction:column; gap:12px;"></div>
+    </div>
+  </div>
+
+  <!-- 
+    LEARNER DETAIL MODAL
+    --------------------
+    Provides a quick overview of a learner's application data and profile image.
+  -->
+  <div class="modal" id="learnerDetailModal" aria-hidden="true" role="dialog">
+    <div class="modal-content">
+      <button type="button" id="learnerDetailCloseBtn" class="btn secondary" style="position:absolute; right:12px; top:12px; padding:6px 10px;">✖</button>
+      <h2 class="modal-title">Learner Application Details</h2>
+      <div id="learnerDetailBody" style="max-height:60vh; overflow:auto; display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+  </div>
+
+  <!-- 
+    LEARNING PROGRESS MODAL
+    -----------------------
+    Tracks a user's progress across various courses. Dynamically renders
+    progress bars and enrollment dates for a comprehensive overview.
+  -->
+  <div class="modal" id="userLearningModal" aria-hidden="true" role="dialog">
+    <div class="modal-content">
+      <button type="button" id="userLearningCloseBtn" class="btn secondary" style="position:absolute; right:12px; top:12px; padding:6px 10px;">✖</button>
+      <h2 class="modal-title">User Learning Journey</h2>
+      <div id="userLearningBody" style="max-height:60vh; overflow:auto;">
+        <div id="userLearningInfo" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);"></div>
+        <div id="userLearningCourses"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Fetches and renders the list of learner requests.
+     * @param {string} status - Filter by request status (approved, pending, etc.)
+     * @param {string} filterBy - The field to search by (name, email, username)
+     * @param {string} q - The search query string
+     */
+    async function refreshList(status, filterBy, q) {
+      const body = document.getElementById('requestsBody');
+      if (!body) return;
+      body.innerHTML = '<tr><td colspan="9" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>';
+      try {
+        const params = new URLSearchParams();
+        if (status) params.set('status', status);
+        if (filterBy && q) { params.set('filterBy', filterBy); params.set('q', q); }
+        
+        const res = await fetch('/api/admin/learner/requests' + (params.toString() ? `?${params}` : ''));
+        const data = await res.json();
+        
+        if (!res.ok || !data.success) { 
+          body.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#ef4444;">Failed to load</td></tr>'; 
+          return; 
+        }
+        
+        const rows = (data && data.requests) || [];
+        if (!rows.length) { 
+          body.innerHTML = '<tr><td colspan="9" style="text-align:center; color: var(--text-muted);">No requests</td></tr>'; 
+          return; 
+        }
+        
+        // Map and render each request row
+        body.innerHTML = rows.map(r => {
+          const phoneDisplay = r.phone ? (r.country_code ? `${r.country_code} ${r.phone.replace(r.country_code, '').trim()}` : r.phone) : '';
+          const imageDisplay = r.image_url ? `<img class="img-thumb" src="${r.image_url}" alt="Learner Image" style="cursor: pointer;" onclick="window.open('${r.image_url}', '_blank')" title="Click to view full size">` : '<span class="chip">No Image</span>';
+          return `
+          <tr>
+            <td>${r.name || ''}</td>
+            <td>${r.email || ''}</td>
+            <td>${r.username || ''}</td>
+            <td>${phoneDisplay}</td>
+            <td>${r.course || ''}</td>
+            <td>${r.education_level || ''}</td>
+            <td>${imageDisplay}</td>
+            <td><span class="chip">${r.status === 'accepted' ? 'approved' : (r.status === 'rejected' ? 'not_approved' : r.status)}</span></td>
+            <td>
+              <button class="btn" data-approve="${r.id}">Approve</button>
+              <button class="btn secondary" data-not-approve="${r.id}">Not Approve</button>
+              <button class="btn secondary" data-view-user="${r.id}" style="margin-left:6px;">View User</button>
+              <button class="btn secondary" data-delete-request="${r.id}" style="margin-left:6px;">Delete Request</button>
+            </td>
+          </tr>
+        `;
+        }).join('');
+
+        // Event delegation: Attach listeners to dynamically created buttons
+        body.querySelectorAll('[data-approve]').forEach(btn => {
+          btn.addEventListener('click', () => openMessageModal(btn.getAttribute('data-approve'), 'approve'));
+        });
+        body.querySelectorAll('[data-not-approve]').forEach(btn => {
+          btn.addEventListener('click', () => openMessageModal(btn.getAttribute('data-not-approve'), 'not_approve'));
+        });
+        body.querySelectorAll('[data-view-user]').forEach(btn => {
+          btn.addEventListener('click', () => viewUserFromRequest(btn.getAttribute('data-view-user')));
+        });
+        body.querySelectorAll('[data-delete-request]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-delete-request');
+            const ok = confirm('Delete this learner request?');
+            if (!ok) return;
+            try {
+              const res = await fetch(`/api/admin/learner/requests/${encodeURIComponent(id)}`, { method: 'DELETE' });
+              const data = await res.json();
+              if (!res.ok || !data.success) { alert(data.error || 'Failed'); return; }
+              refreshList();
+            } catch (_) { alert('Server error'); }
+          });
+        });
+      } catch (_) {
+        body.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#ef4444;">Server error</td></tr>';
+      }
+    }
+
+    /**
+     * AUTHENTICATION MODAL MANAGEMENT
+     * Controls the visibility of the initial admin login overlay.
+     */
+
+    /**
+     * Opens the administrative authentication modal and locks body scroll.
+     */
+    function openAuth() {
+      const modal = document.getElementById('adminAuthModal');
+      if (modal) { modal.classList.add('modal-open'); document.body.style.overflow = 'hidden'; }
+    }
+
+    /**
+     * Closes the administrative authentication modal and restores body scroll.
+     */
+    function closeAuth() {
+      const modal = document.getElementById('adminAuthModal');
+      if (modal) { modal.classList.remove('modal-open'); document.body.style.overflow = 'auto'; }
+    }
+
+    /**
+     * GLOBAL STATE MANAGEMENT
+     * Stores contextual data for the shared messaging modal.
+     */
+    let messageState = { requestId: null, mode: null, kind: 'learner' };
+
+    /**
+     * Opens the modal to send a message when approving or rejecting a request.
+     * @param {string|number} requestId - The unique ID of the request being processed.
+     * @param {string} mode - The action being taken ('approve' or 'not_approved').
+     * @param {string} [kind='learner'] - The type of request ('learner' or 'investor').
+     */
+    function openMessageModal(requestId, mode, kind) {
+      messageState = { requestId, mode, kind: kind || 'learner' };
+      const modal = document.getElementById('messageModal');
+      const title = document.getElementById('messageModalTitle');
+      const errorEl = document.getElementById('messageError');
+      const textEl = document.getElementById('messageText');
+      
+      // Update modal UI based on the action mode
+      if (title) title.textContent = mode === 'approve' ? 'Approve — Send Message' : 'Not Approve — Send Message';
+      if (errorEl) { errorEl.textContent = ''; errorEl.classList.remove('visible'); }
+      if (textEl) textEl.value = '';
+      
+      if (modal) { modal.classList.add('modal-open'); document.body.style.overflow = 'hidden'; }
+    }
+
+    /**
+     * Closes the messaging modal and resets the internal state.
+     */
+    function closeMessageModal() {
+      const modal = document.getElementById('messageModal');
+      if (modal) { modal.classList.remove('modal-open'); document.body.style.overflow = 'auto'; }
+      messageState = { requestId: null, mode: null };
+    }
+
+    /**
+     * Fetches and displays detailed information for a single learner.
+     */
+    async function viewLearner(id) {
+      try {
+        const res = await fetch(`/api/admin/learner/requests/${encodeURIComponent(id)}`);
+        const data = await res.json();
+        if (!res.ok || !data.success) { alert(data.error || 'Failed'); return; }
+        const r = data.request;
+        const modal = document.getElementById('learnerDetailModal');
+        const body = document.getElementById('learnerDetailBody');
+        if (!modal || !body) return;
+        
+        const phoneDisplay = r.phone ? (r.country_code ? `${r.country_code} ${r.phone.replace(r.country_code, '').trim()}` : r.phone) : '';
+        body.innerHTML = `
+          <div class="panel">
+            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
+              <div><span class="field-label">Name</span><div class="chip" style="margin-top:6px;">${r.name || ''}</div></div>
+              <div><span class="field-label">Email</span><div class="chip" style="margin-top:6px;">${r.email || ''}</div></div>
+              <div><span class="field-label">Username</span><div class="chip" style="margin-top:6px;">${r.username || ''}</div></div>
+              <div><span class="field-label">Phone</span><div class="chip" style="margin-top:6px;">${phoneDisplay}</div></div>
+              <div><span class="field-label">Selected Course</span><div class="chip" style="margin-top:6px;">${r.course || ''}</div></div>
+              <div><span class="field-label">Education Level</span><div class="chip" style="margin-top:6px;">${r.education_level || ''}</div></div>
+              <div><span class="field-label">Status</span><div class="chip" style="margin-top:6px;">${r.status === 'accepted' ? 'approved' : (r.status === 'rejected' ? 'not_approved' : r.status)}</div></div>
+            </div>
+            <div style="margin-top:12px;">
+              ${r.image_url ? `<img src="${r.image_url}" alt="Learner Image" style="max-width:100%; border-radius:12px; border:1px solid rgba(59,130,246,0.3);" />` : '<span class="chip">No Image</span>'}
+            </div>
+          </div>
+        `;
+        modal.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+      } catch (_) { alert('Server error'); }
+    }
+
+    /**
+     * INITIALIZATION & EVENT DELEGATION
+     * Sets up the core application lifecycle and interactive elements.
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+      const header = document.querySelector('header');
+      const main = document.querySelector('main');
+      const form = document.getElementById('adminAuthForm');
+      const errorEl = document.getElementById('adminAuthError');
+      
+      // Force administrative login upon page entry
+      openAuth();
+      
+      // --- Admin Login Workflow ---
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const u = (document.getElementById('adminUser') || {}).value || '';
+          const p = (document.getElementById('adminPass') || {}).value || '';
+          
+          if (!u || !p) { 
+            if (errorEl) { errorEl.textContent = 'Please enter both username and password'; errorEl.classList.add('visible'); } 
+            return; 
+          }
+
+          try {
+            // Validate credentials against the administrative API
+            const res = await fetch('/api/admin/login', { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify({ username: u, password: p }) 
+            });
+            const data = await res.json();
+            
+            if (res.ok && data.success) {
+              // Grant access: hide auth modal and reveal dashboard content
+              closeAuth();
+              if (header) header.removeAttribute('hidden');
+              if (main) main.removeAttribute('hidden');
+              
+              // Load initial data for the default 'Users' view
+              setActiveTab('users');
+              refreshUsers();
+              refreshList('all');
+              refreshInvestors('all');
+            } else {
+              if (errorEl) { errorEl.textContent = data.error || 'Invalid administrative credentials'; errorEl.classList.add('visible'); }
+            }
+          } catch (_) {
+            if (errorEl) { errorEl.textContent = 'Network or server error occurred'; errorEl.classList.add('visible'); }
+          }
+        });
+      }
+
+      // --- Messaging Modal Workflow ---
+      // This form handles the final step of approving or rejecting user applications
+      const msgForm = document.getElementById('messageForm');
+      const msgError = document.getElementById('messageError');
+      const msgClose = document.getElementById('messageCloseBtn');
+      if (msgClose) { msgClose.addEventListener('click', closeMessageModal); }
+      
+      if (msgForm) {
+        msgForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const text = (document.getElementById('messageText') || {}).value || '';
+          if (!messageState.requestId || !messageState.mode) return;
+
+          try {
+            // Determine the correct API endpoint based on request type and action
+            let endpoint = '';
+            if (messageState.kind === 'investor') {
+              endpoint = messageState.mode === 'approve' 
+                ? `/api/admin/investor/requests/${encodeURIComponent(messageState.requestId)}/approve` 
+                : `/api/admin/investor/requests/${encodeURIComponent(messageState.requestId)}/not-approve`;
+            } else {
+              endpoint = messageState.mode === 'approve' 
+                ? `/api/admin/learner/requests/${encodeURIComponent(messageState.requestId)}/approve` 
+                : `/api/admin/learner/requests/${encodeURIComponent(messageState.requestId)}/not-approve`;
+            }
+
+            const res = await fetch(endpoint, { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify({ message: text }) 
+            });
+            const data = await res.json();
+            
+            if (!res.ok || !data.success) { 
+              if (msgError) { msgError.textContent = data.error || 'Failed to process request'; msgError.classList.add('visible'); } 
+              return; 
+            }
+            
+            // Clean up and refresh the relevant dashboard list
+            closeMessageModal();
+            if (messageState.kind === 'investor') {
+              const statusI = document.getElementById('investorStatusFilter')?.value || 'all';
+              const filterByI = document.getElementById('investorSearchFilter')?.value || '';
+              const qI = document.getElementById('investorSearchInput')?.value || '';
+              refreshInvestors(statusI, filterByI, qI);
+            } else {
+              const status = document.getElementById('learnerStatusFilter')?.value || 'all';
+              const filterBy = document.getElementById('learnerSearchFilter')?.value || '';
+              const q = document.getElementById('learnerSearchInput')?.value || '';
+              refreshList(status, filterBy, q);
+            }
+          } catch (_) {
+            if (msgError) { msgError.textContent = 'Server connection error'; msgError.classList.add('visible'); }
+          }
+        });
+      }
+
+      // --- Tab Navigation Setup ---
+      const tabButtons = document.querySelectorAll('header [data-tab]');
+      tabButtons.forEach(btn => { 
+        btn.addEventListener('click', () => setActiveTab(btn.getAttribute('data-tab'))); 
+      });
+
+      // --- Global Dashboard Controls ---
+      const refreshBtn = document.getElementById('adminRefreshBtn');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+          // Re-fetch data for all dashboard modules to ensure sync
+          const filterBy = document.getElementById('userSearchFilter')?.value || '';
+          const q = document.getElementById('userSearchInput')?.value || '';
+          refreshUsers(filterBy, q);
+          
+          const status = document.getElementById('learnerStatusFilter')?.value || 'all';
+          const lFilterBy = document.getElementById('learnerSearchFilter')?.value || '';
+          const lq = document.getElementById('learnerSearchInput')?.value || '';
+          refreshList(status, lFilterBy, lq);
+          
+          const iStatus = document.getElementById('investorStatusFilter')?.value || 'all';
+          const iFilterBy = document.getElementById('investorSearchFilter')?.value || '';
+          const iq = document.getElementById('investorSearchInput')?.value || '';
+          refreshInvestors(iStatus, iFilterBy, iq);
+          
+          refreshDeposits();
+          refreshWithdrawals();
+          refreshCertificates();
+        });
+      }
+
+      // --- Modal Close Button Listeners ---
+      // Ensuring all modals can be closed via their 'X' buttons
+      const userLearningClose = document.getElementById('userLearningCloseBtn');
+      if (userLearningClose) { userLearningClose.addEventListener('click', () => {
+        const modal = document.getElementById('userLearningModal');
+        if (modal) { modal.classList.remove('modal-open'); document.body.style.overflow = 'auto'; }
+      }); }
+
+      const userDetailClose = document.getElementById('userDetailCloseBtn');
+      if (userDetailClose) { userDetailClose.addEventListener('click', closeUserDetailModal); }
+
+      const learnerDetailClose = document.getElementById('learnerDetailCloseBtn');
+      if (learnerDetailClose) { learnerDetailClose.addEventListener('click', () => {
+        const modal = document.getElementById('learnerDetailModal');
+        if (modal) { modal.classList.remove('modal-open'); document.body.style.overflow = 'auto'; }
+      }); }
+
+      const investorDetailClose = document.getElementById('investorDetailCloseBtn');
+      if (investorDetailClose) { investorDetailClose.addEventListener('click', () => {
+        const modal = document.getElementById('investorDetailModal');
+        if (modal) { modal.classList.remove('modal-open'); document.body.style.overflow = 'auto'; }
+      }); }
+
+      // --- Search Module Setup ---
+      const userSearchBtn = document.getElementById('userSearchBtn');
+      const userSearchInput = document.getElementById('userSearchInput');
+      const userSearchFilter = document.getElementById('userSearchFilter');
+      if (userSearchBtn) { 
+        userSearchBtn.addEventListener('click', () => refreshUsers(userSearchFilter.value, userSearchInput.value.trim())); 
+      }
+
+      const learnerSearchBtn = document.getElementById('learnerSearchBtn');
+      const learnerSearchInput = document.getElementById('learnerSearchInput');
+      const learnerSearchFilter = document.getElementById('learnerSearchFilter');
+      const learnerStatusFilter = document.getElementById('learnerStatusFilter');
+      if (learnerSearchBtn) {
+        learnerSearchBtn.addEventListener('click', () => {
+          refreshList(learnerStatusFilter.value, learnerSearchFilter.value, learnerSearchInput.value.trim());
+        });
+      }
+
+      const investorSearchBtn = document.getElementById('investorSearchBtn');
+      const investorSearchInput = document.getElementById('investorSearchInput');
+      const investorSearchFilter = document.getElementById('investorSearchFilter');
+      const investorStatusFilter = document.getElementById('investorStatusFilter');
+      if (investorSearchBtn) {
+        investorSearchBtn.addEventListener('click', () => {
+          refreshInvestors(investorStatusFilter.value, investorSearchFilter.value, investorSearchInput.value.trim());
+        });
+      }
+    });
+
+    /**
+     * Handles switching between main sections (Users, Learners, Investors, Deposits, Certificates).
+     */
+    function setActiveTab(tab) {
+      const sections = ['users', 'learners', 'investors', 'deposits', 'withdrawals', 'certificates'];
+      sections.forEach(s => {
+        const el = document.getElementById('section-' + s);
+        if (el) el.style.display = tab === s ? 'block' : 'none';
+      });
+
+      // Load specific tab data when activated
+      if (tab === 'investors') {
+        const iStatus = document.getElementById('investorStatusFilter')?.value || 'all';
+        const iFilterBy = document.getElementById('investorSearchFilter')?.value || '';
+        const iq = document.getElementById('investorSearchInput')?.value || '';
+        refreshInvestors(iStatus, iFilterBy, iq);
+      } else if (tab === 'deposits') {
+        refreshDeposits();
+      } else if (tab === 'withdrawals') {
+        refreshWithdrawals();
+      } else if (tab === 'certificates') {
+        refreshCertificates();
+      }
+    }
+
+    /**
+     * Fetches and renders manual deposit requests.
+     */
+    async function refreshDeposits() {
+      const body = document.getElementById('depositsBody');
+      if (!body) return;
+      body.innerHTML = '<tr><td colspan="8" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>';
+      try {
+        const res = await fetch('/api/admin/deposits');
+        const data = await res.json();
+        if (!data.success) {
+          body.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#ef4444;">${data.error || 'Failed to load'}</td></tr>`;
+          return;
+        }
+        
+        const requests = data.requests || [];
+        if (requests.length === 0) {
+          body.innerHTML = '<tr><td colspan="8" style="text-align:center; color: var(--text-muted);">No deposit requests found.</td></tr>';
+          return;
+        }
+
+        body.innerHTML = requests.map(r => {
+          const time = new Date(r.created_at).toLocaleString();
+          const statusClass = `status-${r.status.toLowerCase()}`;
+          return `
+            <tr>
+              <td>#${r.user_id}</td>
+              <td style="font-weight:700; color:var(--accent-blue);">$${Number(r.amount).toLocaleString()}</td>
+              <td><span class="chip">${r.method.toUpperCase()}</span></td>
+              <td>
+                <div style="font-size:12px;"><strong>Name:</strong> ${r.sender_name}</div>
+                <div style="font-size:12px;"><strong>Acc:</strong> ${r.sender_account}</div>
+              </td>
+              <td>
+                <img src="${r.screenshot_url}" class="img-thumb" style="cursor:zoom-in" onclick="window.open('${r.screenshot_url}', '_blank')">
+              </td>
+              <td style="font-size:11px; color:var(--text-muted);">${time}</td>
+              <td><span class="deposit-status-badge ${statusClass}">${r.status}</span></td>
+              <td>
+                ${r.status === 'pending' ? `
+                  <button class="btn" style="padding:4px 8px; font-size:11px; background:var(--success);" onclick="handleDepositAction(${r.id}, 'approve')">Approve</button>
+                  <button class="btn" style="padding:4px 8px; font-size:11px; background:var(--error); margin-left:4px;" onclick="handleDepositAction(${r.id}, 'reject')">Reject</button>
+                ` : '-'}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Refresh deposits error:', err);
+        body.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Server error</td></tr>';
+      }
+    }
+
+    /**
+     * Approves or Rejects a manual deposit request.
+     */
+    async function handleDepositAction(id, action) {
+      if (!confirm(`Are you sure you want to ${action} this deposit?`)) return;
+      try {
+        const res = await fetch(`/api/admin/deposits/${id}/${action}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          alert(`Deposit ${action}d successfully.`);
+          refreshDeposits();
+        } else {
+          alert(data.error || 'Action failed');
+        }
+      } catch (err) {
+        alert('Server error processing deposit');
+      }
+    }
+
+    /**
+     * Fetches and renders manual withdrawal requests.
+     */
+    async function refreshWithdrawals() {
+      const body = document.getElementById('withdrawalsBody');
+      if (!body) return;
+      body.innerHTML = '<tr><td colspan="8" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>';
+      try {
+        const res = await fetch('/api/admin/withdrawals');
+        const data = await res.json();
+        if (!data.success) {
+          body.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#ef4444;">${data.error || 'Failed to load'}</td></tr>`;
+          return;
+        }
+        
+        const requests = data.requests || [];
+        if (requests.length === 0) {
+          body.innerHTML = '<tr><td colspan="8" style="text-align:center; color: var(--text-muted);">No withdrawal requests found.</td></tr>';
+          return;
+        }
+
+        body.innerHTML = requests.map(r => {
+          const time = new Date(r.created_at).toLocaleString();
+          const statusClass = `status-${r.status.toLowerCase()}`;
+          return `
+            <tr>
+              <td>
+                <div style="font-weight:600;">${r.userName || 'User #'+r.user_id}</div>
+                <div style="font-size:11px; color:var(--text-muted);">ID: ${r.user_id}</div>
+              </td>
+              <td>
+                <div style="font-weight:700; color:var(--error);">$${Number(r.amount).toLocaleString()}</div>
+                <div style="font-size:11px; color:var(--text-muted);">Fee: $${Number(r.fee).toFixed(2)}</div>
+              </td>
+              <td style="font-weight:800; color:var(--success);">$${Number(r.net_amount).toLocaleString()}</td>
+              <td><span class="chip" style="background:rgba(139,92,246,0.1); color:#a78bfa;">${r.method.toUpperCase()}</span></td>
+              <td>
+                <div style="font-size:12px;"><strong>Name:</strong> ${r.account_name}</div>
+                <div style="font-size:12px; color:var(--text-secondary); word-break:break-all;"><strong>Addr:</strong> ${r.account_address}</div>
+              </td>
+              <td style="font-size:11px; color:var(--text-muted);">${time}</td>
+              <td><span class="deposit-status-badge ${statusClass}">${r.status.toUpperCase()}</span></td>
+              <td>
+                ${r.status === 'pending' ? `
+                  <div style="display:flex; gap:4px;">
+                    <button class="btn" style="padding:4px 8px; font-size:11px; background:var(--success);" onclick="handleWithdrawAction(${r.id}, 'approve')">Approve</button>
+                    <button class="btn" style="padding:4px 8px; font-size:11px; background:var(--error);" onclick="handleWithdrawAction(${r.id}, 'reject')">Reject</button>
+                  </div>
+                ` : `<span style="font-size:11px; color:var(--text-muted);">Processed</span>`}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Refresh withdrawals error:', err);
+        body.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Server error</td></tr>';
+      }
+    }
+
+    /**
+     * Approves or Rejects a manual withdrawal request.
+     */
+    async function handleWithdrawAction(id, action) {
+      if (!confirm(`Are you sure you want to ${action} this withdrawal?`)) return;
+      try {
+        const res = await fetch(`/api/admin/withdrawals/${id}/${action}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          alert(`Withdrawal ${action}d successfully.`);
+          refreshWithdrawals();
+        } else {
+          alert(data.error || 'Action failed');
+        }
+      } catch (err) {
+        alert('Server error processing withdrawal');
+      }
+    }
+
+    /**
+     * Fetches and renders all certificate issuance requests.
+     */
+    async function refreshCertificates() {
+      const body = document.getElementById('certificatesBody');
+      if (!body) return;
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>';
+      try {
+        const res = await fetch('/api/admin/certificate-requests');
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">Failed to load</td></tr>';
+          return;
+        }
+        const requests = data.requests || [];
+        if (requests.length === 0) {
+          body.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No certificate requests found.</td></tr>';
+          return;
+        }
+        body.innerHTML = requests.map(r => `
+          <tr>
+            <td>
+              <div style="font-weight:600;">${r.userName}</div>
+              <div style="font-size:12px; color:var(--text-muted);">${r.userEmail}</div>
+            </td>
+            <td>${r.course_id}</td>
+            <td>${new Date(r.request_date).toLocaleDateString()}</td>
+            <td><span class="chip" style="background:${getStatusColor(r.status)}; color:#fff;">${r.status}</span></td>
+            <td>
+              ${r.status === 'Pending' ? `
+                <button class="btn" style="background:var(--success);" onclick="handleCertRequest(${r.id}, 'approve')">Approve</button>
+                <button class="btn" style="background:var(--error); margin-left:6px;" onclick="handleCertRequest(${r.id}, 'reject')">Reject</button>
+              ` : (r.status === 'Rejected' ? `
+                <button class="btn" style="background:var(--success);" onclick="handleCertRequest(${r.id}, 'approve')">Approve Again</button>
+                <button class="btn" style="background:var(--error); margin-left:6px;" onclick="handleDeleteCertRequest(${r.id})">Delete</button>
+              ` : `
+                <button class="btn" style="background:var(--error);" onclick="handleDeleteCertRequest(${r.id})">Delete</button>
+              `)}
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Refresh certificates error:', err);
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">Error fetching requests</td></tr>';
+      }
+    }
+
+    /**
+     * Maps status strings to background colors for UI chips.
+     */
+    function getStatusColor(status) {
+      switch (status) {
+        case 'Approved': return 'rgba(34, 197, 94, 0.4)';
+        case 'Rejected': return 'rgba(239, 68, 68, 0.4)';
+        default: return 'rgba(59, 130, 246, 0.4)';
+      }
+    }
+
+    /**
+     * Approves or Rejects a course completion certificate request.
+     */
+    async function handleCertRequest(id, action) {
+      if (!confirm(`Are you sure you want to ${action} this request?`)) return;
+      try {
+        const res = await fetch(`/api/admin/certificate-requests/${id}/${action}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          alert('Request ' + action + 'd successfully');
+          refreshCertificates();
+        } else {
+          alert(data.error || 'Failed to update request');
+        }
+      } catch (err) {
+        console.error('Handle cert request error:', err);
+        alert('Error updating request');
+      }
+    }
+
+    /**
+     * Permanently deletes a certificate request record.
+     */
+    async function handleDeleteCertRequest(id) {
+      if (!confirm('Are you sure you want to delete this request?')) return;
+      try {
+        const res = await fetch(`/api/admin/certificate-requests/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          alert('Request deleted successfully');
+          refreshCertificates();
+        } else {
+          alert(data.error || 'Failed to delete request');
+        }
+      } catch (err) {
+        console.error('Delete cert request error:', err);
+        alert('Error deleting request');
+      }
+    }
+
+    /**
+     * Fetches and displays full user details in a professional modal.
+     */
+    async function viewUserDetails(userId) {
+      const modal = document.getElementById('userDetailModal');
+      const body = document.getElementById('userDetailBody');
+      if (!modal || !body) return;
+
+      body.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-muted);">Loading comprehensive data...</div>';
+      modal.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+
+      try {
+        // Fetch base profile, wallet, and investment summary
+        const [profileRes, walletRes, investmentRes] = await Promise.all([
+          fetch(`/api/user/profile?userId=${userId}`),
+          fetch(`/api/wallet?userId=${userId}`),
+          fetch(`/api/investments/summary?userId=${userId}`)
+        ]);
+
+        const profileData = await profileRes.json();
+        const walletData = await walletRes.json();
+        const investmentData = await investmentRes.json();
+
+        // Calculate Account Type for Details Modal
+        let dynamicType = 'Standard';
+        const hasLearner = (await fetch(`/api/learner/request/status?userId=${userId}`).then(r => r.json())).status === 'approved';
+        const hasInvestor = investmentData.summary?.positions?.length > 0;
+        if (hasLearner && hasInvestor) dynamicType = 'Learner + Investor';
+        else if (hasLearner) dynamicType = 'Learner';
+        else if (hasInvestor) dynamicType = 'Investor';
+
+        if (!profileData.success) {
+          body.innerHTML = '<div style="color:var(--error); text-align:center; padding:2rem;">Failed to load profile</div>';
+          return;
+        }
+
+        const p = profileData.profile;
+        const w = walletData.wallet || { availableBalance: 0, totalDeposited: 0, totalWithdrawn: 0 };
+        const inv = investmentData.summary || { investedTotal: 0, currentTotal: 0, profitAmount: 0, profitPercent: 0 };
+
+        const statusColor = p.status === 'disabled' ? 'var(--error)' : 'var(--success)';
+        const profitColor = inv.profitAmount >= 0 ? 'var(--success)' : 'var(--error)';
+
+        body.innerHTML = `
+          <div class="panel" style="background: rgba(15,20,25,0.4); border: none;">
+            <!-- Profile Overview -->
+            <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 2rem; padding: 1.5rem; background: rgba(59,130,246,0.05); border-radius: 16px;">
+              <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; color: #fff;">
+                ${p.fullName.charAt(0).toUpperCase()}
+              </div>
+              <div style="flex: 1;">
+                <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 4px;">${p.fullName}</h3>
+                <div style="color: var(--text-muted); font-size: 14px; display: flex; gap: 15px;">
+                  <span><i class="icon">📧</i> ${p.email}</span>
+                  <span><i class="icon">👤</i> @${p.username || 'N/A'}</span>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <span class="chip" style="background: ${statusColor}22; color: ${statusColor}; border-color: ${statusColor}44; padding: 6px 15px; font-size: 13px;">
+                  ${(p.status || 'active').toUpperCase()}
+                </span>
+                <div style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">Joined ${new Date(p.created_at || Date.now()).toLocaleDateString()}</div>
+              </div>
+            </div>
+
+            <!-- Financial Cards Grid -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 2rem;">
+              <div class="stat-card" style="padding: 1.2rem; animation: none; opacity: 1;">
+                <div class="stat-label" style="font-size: 10px;">Wallet Balance</div>
+                <div class="stat-value" style="font-size: 24px;">$${Number(w.availableBalance).toLocaleString()}</div>
+                <div class="stat-meta">Ready for withdrawal</div>
+              </div>
+              <div class="stat-card" style="padding: 1.2rem; animation: none; opacity: 1;">
+                <div class="stat-label" style="font-size: 10px;">Total Invested</div>
+                <div class="stat-value" style="font-size: 24px;">$${Number(inv.investedTotal).toLocaleString()}</div>
+                <div class="stat-meta">Across ${inv.positions?.length || 0} assets</div>
+              </div>
+              <div class="stat-card" style="padding: 1.2rem; animation: none; opacity: 1;">
+                <div class="stat-label" style="font-size: 10px;">Profit / Loss</div>
+                <div class="stat-value" style="font-size: 24px; color: ${profitColor}; -webkit-text-fill-color: ${profitColor};">
+                  ${inv.profitAmount >= 0 ? '+' : ''}$${Math.abs(inv.profitAmount).toLocaleString()}
+                </div>
+                <div class="stat-meta" style="color: ${profitColor};">${inv.profitPercent.toFixed(2)}% ROI</div>
+              </div>
+            </div>
+
+            <!-- Detailed Information Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+              <!-- Personal Details -->
+              <div>
+                <h4 style="font-size: 14px; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Personal Information</h4>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Phone</span>
+                    <span>${p.phone || 'Not provided'}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">CNIC</span>
+                    <span>${p.cnic || 'Not provided'}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Address</span>
+                    <span>${p.address || 'Not provided'}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Account Type</span>
+                    <span class="chip" style="font-size: 10px; padding: 2px 8px; color: ${dynamicType === 'Learner' ? '#3b82f6' : (dynamicType === 'Investor' ? '#22c55e' : (dynamicType === 'Learner + Investor' ? '#8b5cf6' : 'var(--text-muted)'))};">${dynamicType.toUpperCase()}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction Summary -->
+              <div>
+                <h4 style="font-size: 14px; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Activity Summary</h4>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Total Deposited</span>
+                    <span style="color: var(--success); font-weight: 600;">$${Number(w.totalDeposited).toLocaleString()}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Total Withdrawn</span>
+                    <span style="color: var(--error); font-weight: 600;">$${Number(w.totalWithdrawn).toLocaleString()}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">KYC Status</span>
+                    <span class="chip" style="font-size: 10px; padding: 2px 8px;">${(p.kycStatus || 'pending').toUpperCase()}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Verification</span>
+                    <span class="chip" style="font-size: 10px; padding: 2px 8px;">${p.verificationStatus.toUpperCase()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div style="margin-top: 2.5rem; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+              <button class="btn secondary" onclick="closeUserDetailModal()">Close Details</button>
+              <button class="btn" onclick="showUserLearning(${userId})">View Learning Progress</button>
+              <button class="btn" style="background: ${statusColor};" onclick="toggleUserStatus(${userId}, '${p.status || 'active'}')">
+                ${p.status === 'disabled' ? 'Enable Account' : 'Disable Account'}
+              </button>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        console.error('Error viewing user details:', err);
+        body.innerHTML = '<div style="color:var(--error); text-align:center; padding:2rem;">Error fetching comprehensive user data</div>';
+      }
+    }
+
+    function closeUserDetailModal() {
+      const modal = document.getElementById('userDetailModal');
+      if (modal) { modal.classList.remove('modal-open'); document.body.style.overflow = 'auto'; }
+    }
+
+    /**
+     * Toggles a user's account status (Enable/Disable).
+     */
+    async function toggleUserStatus(id, currentStatus) {
+      const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
+      const actionText = newStatus === 'active' ? 'Enable' : 'Disable';
+      if (!confirm(`Are you sure you want to ${actionText} this user's account?`)) return;
+
+      try {
+        const res = await fetch(`/api/admin/users/${encodeURIComponent(id)}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const filterBy = document.getElementById('userSearchFilter')?.value || '';
+          const q = document.getElementById('userSearchInput')?.value || '';
+          refreshUsers(filterBy, q);
+        } else {
+          alert(data.error || 'Failed to update status');
+        }
+      } catch (_) {
+        alert('Server error updating status');
+      }
+    }
+
+    /**
+     * Fetches and renders the primary user list.
+     */
+    async function refreshUsers(filterBy, q) {
+      const body = document.getElementById('usersBody');
+      if (!body) return;
+      body.innerHTML = '<tr><td colspan="10" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>';
+      const params = new URLSearchParams();
+      if (filterBy && q) { params.set('filterBy', filterBy); params.set('q', q); }
+      try {
+        const res = await fetch('/api/admin/users' + (params.toString() ? `?${params}` : ''));
+        const data = await res.json();
+        if (!res.ok || !data.success) { body.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#ef4444;">Failed to load</td></tr>'; return; }
+        
+        const rows = (data && data.users) || [];
+        if (!rows.length) { body.innerHTML = '<tr><td colspan="10" style="text-align:center; color: var(--text-muted);">No users</td></tr>'; return; }
+        
+        body.innerHTML = rows.map(u => {
+          const status = u.status || 'active';
+          const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+          const statusColor = status === 'active' ? 'var(--success)' : 'var(--error)';
+          const statusBtnText = status === 'active' ? 'Disable' : 'Enable';
+          const statusBtnColor = status === 'active' ? 'var(--error)' : 'var(--success)';
+
+          // Account Type Colors
+          let typeColor = 'var(--text-muted)';
+          if (u.accountType === 'Learner') typeColor = '#3b82f6'; // Blue
+          else if (u.accountType === 'Investor') typeColor = '#22c55e'; // Green
+          else if (u.accountType === 'Learner + Investor') typeColor = '#8b5cf6'; // Purple
+
+          return `
+            <tr data-username="${u.username || ''}" data-userid="${u.id}">
+              <td>${u.fullName || ''}</td>
+              <td>${u.username || ''}</td>
+              <td>${u.email || ''}</td>
+              <td>${u.phone || ''}</td>
+              <td><span class="chip" style="color: ${typeColor}; border-color: ${typeColor}44; background: ${typeColor}11;">${u.accountType || 'Standard'}</span></td>
+              <td><span class="chip" style="background: ${statusColor}22; color: ${statusColor}; border-color: ${statusColor}44;">${statusLabel}</span></td>
+              <td>${new Date(u.registeredAt).toLocaleString()}</td>
+              <td>
+                <button class="btn" style="background: ${statusBtnColor};" onclick="toggleUserStatus(${u.id}, '${status}')">${statusBtnText}</button>
+                <button class="btn" style="background: var(--accent-blue); margin-left:6px;" onclick="viewUserDetails(${u.id})">Details</button>
+                <button class="btn" data-view-learning="${u.id}" style="margin-left:6px;">Learning</button>
+                <button class="btn secondary" data-download-user="${u.id}" style="margin-left:6px;">PDF</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        
+        // Re-attach listeners for dynamic user actions
+        body.querySelectorAll('[data-view-learning]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-view-learning');
+            showUserLearning(id);
+          });
+        });
+        body.querySelectorAll('[data-download-user]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const tr = btn.closest('tr');
+            const userId = tr?.getAttribute('data-userid');
+            const username = tr?.getAttribute('data-username');
+            const email = tr?.children?.[2]?.textContent || '';
+            downloadUserPdf(userId, username, email);
+          });
+        });
+      } catch (_) {
+        body.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#ef4444;">Server error</td></tr>';
+      }
+    }
+
+    /**
+     * Fetches and displays course progress for a specific user in a modal.
+     */
+    async function showUserLearning(userId) {
+      const modal = document.getElementById('userLearningModal');
+      const info = document.getElementById('userLearningInfo');
+      const courses = document.getElementById('userLearningCourses');
+      
+      if (!modal || !info || !courses) return;
+      
+      info.innerHTML = 'Loading...';
+      courses.innerHTML = '';
+      modal.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+
+      try {
+        const res = await fetch(`/api/admin/users/${userId}/learning`);
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          info.innerHTML = '<span style="color:#ef4444;">Failed to load data</span>';
+          return;
+        }
+
+        const ld = data.learningData;
+        info.innerHTML = `
+          <div style="font-size: 1.2rem; font-weight: 700;">${ld.user.full_name}</div>
+          <div style="color: var(--text-muted);">${ld.user.email}</div>
+        `;
+
+        if (ld.courses.length === 0) {
+          courses.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-muted);">User has not started any courses.</div>';
+          return;
+        }
+
+        // Render progress bars for each course
+        courses.innerHTML = ld.courses.map(c => `
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <div style="font-weight: 700;">${c.courseId}</div>
+              <span class="chip" style="background: ${c.status === 'Completed' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(59, 130, 246, 0.2)'}; color: #fff;">${c.status}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="flex: 1; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                <div style="width: ${c.progress}%; height: 100%; background: var(--accent-blue);"></div>
+              </div>
+              <div style="font-size: 12px; font-weight: 600;">${c.progress}%</div>
+            </div>
+            ${c.enrolledAt ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Enrolled on: ${new Date(c.enrolledAt).toLocaleDateString()}</div>` : ''}
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Show learning error:', err);
+        info.innerHTML = '<span style="color:#ef4444;">Error fetching data</span>';
+      }
+    }
+
+    /**
+     * Converts a file URL to a Base64 data URL for embedding images in PDFs.
+     */
+    async function blobToDataUrl(url) {
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        return await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+      } catch (_) { return null; }
+    }
+
+    /**
+     * Checks if jsPDF is available, loading it dynamically if necessary.
+     */
+    async function ensureJsPdf() {
+      try {
+        if (window.jspdf && window.jspdf.jsPDF) return true;
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+          s.onload = () => resolve(true);
+          s.onerror = () => reject(new Error('Failed to load jsPDF'));
+          document.head.appendChild(s);
+        });
+        return !!(window.jspdf && window.jspdf.jsPDF);
+      } catch (_) { return false; }
+    }
+
+    /**
+     * Generates a comprehensive professional PDF report for a user.
+     * Includes signup details, learner application data, and investor verification info.
+     */
+    async function downloadUserPdf(userId, username, email) {
+      try {
+        const ok = await ensureJsPdf();
+        const { jsPDF } = window.jspdf || {};
+        if (!ok || !jsPDF) { alert('PDF library not loaded'); return; }
+        
+        const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait' });
+        const pageWidth = 595;
+        const pageHeight = 842;
+        const margin = 50;
+        let y = margin;
+
+        // Professional header with NH Network branding
+        doc.setFillColor(59, 130, 246);
+        doc.rect(0, 0, pageWidth, 80, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(28);
+        doc.text('NH NETWORK', margin, 40);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Complete User Profile Report', margin, 60);
+        
+        // Add generation timestamp
+        const now = new Date().toLocaleString('en-PK', { timeZone: 'Asia/Karachi' });
+        doc.setFontSize(10);
+        doc.text(`Generated: ${now}`, pageWidth - margin - 150, 60);
+        
+        y = 100;
+
+        /**
+         * PDF Helper: Adds a stylized section header to the document.
+         * @param {string} title - The title of the section.
+         */
+        function addSectionHeader(title) {
+          if (y > pageHeight - 100) { doc.addPage(); y = margin; }
+          doc.setFillColor(240, 242, 245);
+          doc.rect(margin - 10, y - 2, pageWidth - 2 * margin + 20, 30, 'F');
+          doc.setTextColor(31, 41, 55);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(16);
+          doc.text(title, margin, y + 18);
+          y += 40;
+        }
+
+        /**
+         * PDF Helper: Adds a labeled data field to the current page.
+         * @param {string} label - The field label.
+         * @param {string} value - The field value.
+         * @param {number[]} [color=[107, 114, 128]] - RGB color array for the value text.
+         */
+        function addField(label, value, color = [107, 114, 128]) {
+          if (y > pageHeight - 50) { doc.addPage(); y = margin; }
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(11);
+          doc.setTextColor(75, 85, 99);
+          doc.text(label + ':', margin, y);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(color[0], color[1], color[2]);
+          doc.text(value || 'N/A', margin + 150, y);
+          y += 22;
+        }
+
+        /**
+         * PDF Helper: Fetches and embeds an image into the document with a border.
+         * @param {string} label - The image caption/label.
+         * @param {string} url - The source URL of the image.
+         * @param {number} [imgWidth=200] - Display width in points.
+         * @param {number} [imgHeight=200] - Display height in points.
+         */
+        async function addImageSection(label, url, imgWidth=200, imgHeight=200) {
+          if (!url) return;
+          const dataUrl = await blobToDataUrl(url);
+          if (!dataUrl) return;
+          if (y + imgHeight + 40 > pageHeight - margin) { doc.addPage(); y = margin; }
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.setTextColor(31, 41, 55);
+          doc.text(label, margin, y);
+          y += 20;
+          doc.setDrawColor(203, 213, 225);
+          doc.setLineWidth(1);
+          doc.rect(margin - 5, y - 5, imgWidth + 10, imgHeight + 10, 'S');
+          doc.addImage(dataUrl, 'PNG', margin, y, imgWidth, imgHeight);
+          y += imgHeight + 30;
+        }
+
+        /**
+         * PDF Helper: Adds a subtle horizontal divider line to separate sections.
+         */
+        function addDivider() {
+          if (y > pageHeight - 30) { doc.addPage(); y = margin; }
+          doc.setDrawColor(226, 232, 240);
+          doc.setLineWidth(0.5);
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 15;
+        }
+
+        // Fetch the latest profile data from the server
+        let profile = null;
+        if (userId) {
+          try {
+            const r = await fetch(`/api/user/profile?userId=${encodeURIComponent(userId)}`);
+            const d = await r.json();
+            if (d && d.profile) profile = d.profile;
+          } catch (_) {}
+        }
+
+        // SECTION 1: ACCOUNT BASICS
+        addSectionHeader('SIGNUP DETAILS');
+        addField('Full Name', profile?.fullName || username || '', [37, 99, 235]);
+        addField('Email Address', profile?.email || email || '', [37, 99, 235]);
+        addField('Phone Number', profile?.phone || 'Not provided');
+        addField('Address', profile?.address || 'Not provided');
+        addField('Account Created', profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A');
+        addDivider();
+
+        // SECTION 2: LEARNER DATA
+        addSectionHeader('LEARNER DETAILS');
+        let learner = null;
+        try {
+          const r = await fetch(`/api/admin/learner/requests?filterBy=username&q=${encodeURIComponent(username || '')}`);
+          const d = await r.json();
+          if (d?.success && d.requests?.length) learner = d.requests[0];
+        } catch (_) {}
+        
+        if (learner) {
+          addField('Selected Course', learner.course || 'None', [34, 197, 94]);
+          addField('Education Level', learner.education_level || 'Not specified');
+          const statusMap = { accepted: 'Approved', rejected: 'Not Approved', pending: 'Pending' };
+          const statusColor = learner.status === 'accepted' ? [34, 197, 94] : (learner.status === 'rejected' ? [239, 68, 68] : [245, 158, 11]);
+          addField('Status', statusMap[learner.status] || learner.status || 'Pending', statusColor);
+          addField('Applied Date', learner.created_at ? new Date(learner.created_at).toLocaleDateString() : 'N/A');
+          if (learner.image_url) await addImageSection('Profile Image', learner.image_url, 180, 180);
+        } else {
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(11);
+          doc.setTextColor(156, 163, 175);
+          doc.text('No learner application found', margin, y);
+          y += 30;
+        }
+        addDivider();
+
+        // SECTION 3: INVESTOR VERIFICATION DATA
+        addSectionHeader('INVESTOR DETAILS');
+        let investor = null;
+        try {
+          const r = await fetch(`/api/admin/investor/requests?filterBy=email&q=${encodeURIComponent(email || '')}`);
+          const d = await r.json();
+          if (d?.success && d.requests?.length) investor = d.requests[0];
+        } catch (_) {}
+        
+        if (investor) {
+          const statusColor = investor.status === 'approved' ? [34, 197, 94] : (investor.status === 'not_approved' ? [239, 68, 68] : [245, 158, 11]);
+          addField('Status', investor.status?.toUpperCase() || 'PENDING', statusColor);
+          addField('CNIC / ID Number', investor.cnic || 'Not provided');
+          addField('Date of Birth', investor.dob ? new Date(investor.dob).toLocaleDateString() : 'N/A');
+          addField('Address', investor.address || 'Not provided');
+          const phoneDisplay = investor.country_code && investor.phone 
+            ? `${investor.country_code} ${String(investor.phone).replace(investor.country_code, '').trim()}`
+            : (investor.phone || 'Not provided');
+          addField('Phone', phoneDisplay);
+          addField('Applied Date', investor.created_at ? new Date(investor.created_at).toLocaleDateString() : 'N/A');
+          
+          // Embed verification documents
+          if (investor.avatar_url) await addImageSection('Profile Photo', investor.avatar_url, 160, 160);
+          if (investor.cnic_front_url) await addImageSection('ID Card - Front', investor.cnic_front_url, 250, 160);
+          if (investor.cnic_back_url) await addImageSection('ID Card - Back', investor.cnic_back_url, 250, 160);
+          if (investor.selfie_url) await addImageSection('Live Selfie Verification', investor.selfie_url, 160, 160);
+        } else {
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(11);
+          doc.setTextColor(156, 163, 175);
+          doc.text('No investor application found', margin, y);
+          y += 30;
+        }
+
+        // Global PDF Footer (Applied to every page)
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+          doc.setPage(i);
+          doc.setFillColor(240, 242, 245);
+          doc.rect(0, pageHeight - 40, pageWidth, 40, 'F');
+          doc.setTextColor(107, 114, 128);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.text('© 2025 NH Network. All Rights Reserved.', margin, pageHeight - 20);
+          doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin - 50, pageHeight - 20);
+        }
+
+        // Trigger browser download
+        doc.save(`NH_Network_User_${username || userId || 'profile'}.pdf`);
+      } catch (e) {
+        console.error('PDF error:', e);
+        alert('Failed to generate PDF. Please try again.');
+      }
+    }
+
+    /**
+     * Fetches and renders the list of investor requests.
+     */
+    async function refreshInvestors(status, filterBy, q) {
+      const body = document.getElementById('investorsBody');
+      if (!body) return;
+      body.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Loading...</td></tr>';
+      try {
+        const params = new URLSearchParams();
+        if (status && status !== 'all') params.set('status', status);
+        if (filterBy && q) { params.set('filterBy', filterBy); params.set('q', q); }
+        
+        const res = await fetch('/api/admin/investor/requests' + (params.toString() ? `?${params}` : ''));
+        const data = await res.json();
+        if (!res.ok || !data.success) { body.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444;">Failed to load</td></tr>'; return; }
+        
+        const rows = (data && data.requests) || [];
+        // Store globally for quick access when viewing details
+        window.__investorRows = rows;
+        
+        if (!rows.length) { body.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">No requests</td></tr>'; return; }
+        
+        body.innerHTML = rows.map(r => {
+          const phoneDisplay = r.phone ? (r.country_code ? `${r.country_code} ${String(r.phone).replace(r.country_code, '').trim()}` : r.phone) : '';
+          const statusText = r.status || 'pending';
+          return `
+          <tr>
+            <td>${r.full_name || ''}</td>
+            <td>${r.email || ''}</td>
+            <td>${r.username || ''}</td>
+            <td>${phoneDisplay}</td>
+            <td>${r.cnic || ''}</td>
+            <td><span class="chip">${statusText}</span></td>
+            <td>
+              <button class="btn" data-investor-approve="${r.id}">Approve</button>
+              <button class="btn secondary" data-investor-not-approve="${r.id}">Not Approve</button>
+              <button class="btn secondary" data-investor-view="${r.id}" style="margin-left:6px;">View Details</button>
+              <button class="btn secondary" data-investor-view-user="${r.username || ''}" style="margin-left:6px;">View User</button>
+              <button class="btn secondary" data-investor-delete="${r.id}" style="margin-left:6px;">Delete Request</button>
+            </td>
+          </tr>
+        `;
+        }).join('');
+
+        // Action listeners for investor requests
+        body.querySelectorAll('[data-investor-approve]').forEach(btn => {
+          btn.addEventListener('click', () => openMessageModal(btn.getAttribute('data-investor-approve'), 'approve', 'investor'));
+        });
+        body.querySelectorAll('[data-investor-not-approve]').forEach(btn => {
+          btn.addEventListener('click', () => openMessageModal(btn.getAttribute('data-investor-not-approve'), 'not_approve', 'investor'));
+        });
+        body.querySelectorAll('[data-investor-view]').forEach(btn => {
+          btn.addEventListener('click', () => viewInvestorRow(btn.getAttribute('data-investor-view')));
+        });
+        body.querySelectorAll('[data-investor-view-user]').forEach(btn => {
+          btn.addEventListener('click', () => viewUserByUsername(btn.getAttribute('data-investor-view-user')));
+        });
+        body.querySelectorAll('[data-investor-delete]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-investor-delete');
+            const ok = confirm('Delete this investor request?');
+            if (!ok) return;
+            try {
+              const res = await fetch(`/api/admin/investor/requests/${encodeURIComponent(id)}`, { method: 'DELETE' });
+              const data = await res.json();
+              if (!res.ok || !data.success) { alert(data.error || 'Failed'); return; }
+              const statusI = document.getElementById('investorStatusFilter')?.value || 'all';
+              const filterByI = document.getElementById('investorSearchFilter')?.value || '';
+              const qI = document.getElementById('investorSearchInput')?.value || '';
+              refreshInvestors(statusI, filterByI, qI);
+            } catch (_) { alert('Server error'); }
+          });
+        });
+      } catch (_) {
+        body.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444;">Server error</td></tr>';
+      }
+    }
+
+    /**
+     * Renders a detailed view of an investor request, including all uploaded documents and verification video.
+     */
+    function viewInvestorRow(requestId) {
+      const modal = document.getElementById('investorDetailModal');
+      const detail = document.getElementById('investorDetailBody');
+      if (!modal || !detail) return;
+      
+      const rows = window.__investorRows || [];
+      const r = rows.find(x => String(x.id) === String(requestId));
+      if (!r) return;
+      
+      const phoneDisplay = r.phone ? (r.country_code ? `${r.country_code} ${String(r.phone).replace(r.country_code,'').trim()}` : r.phone) : '';
+      const statusText = r.status || 'pending';
+      
+      detail.innerHTML = `
+        <div class="panel">
+          <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
+            <div><span class="field-label">Name</span><div class="chip" style="margin-top:6px;">${r.full_name || ''}</div></div>
+            <div><span class="field-label">Email</span><div class="chip" style="margin-top:6px;">${r.email || ''}</div></div>
+            <div><span class="field-label">Username</span><div class="chip" style="margin-top:6px;">${r.username || ''}</div></div>
+            <div><span class="field-label">Phone</span><div class="chip" style="margin-top:6px;">${phoneDisplay}</div></div>
+            <div><span class="field-label">CNIC</span><div class="chip" style="margin-top:6px;">${r.cnic || ''}</div></div>
+            <div><span class="field-label">Address</span><div class="chip" style="margin-top:6px;">${r.address || ''}</div></div>
+            <div><span class="field-label">Status</span><div class="chip" style="margin-top:6px;">${statusText}</div></div>
+            <div><span class="field-label">Date of Birth</span><div class="chip" style="margin-top:6px;">${r.dob ? new Date(r.dob).toLocaleDateString() : 'N/A'}</div></div>
+          </div>
+          <div style="margin-top:12px; display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:12px;">
+            ${r.avatar_url ? `<div><span class="field-label">Profile Photo</span><img src="${r.avatar_url}" alt="Profile Photo" style="width:100%; border-radius:12px; border:1px solid rgba(59,130,246,0.3); cursor:pointer;" onclick="window.open('${r.avatar_url}', '_blank')" /></div>` : ''}
+            ${r.cnic_front_url ? `<div><span class="field-label">ID Front</span><img src="${r.cnic_front_url}" alt="ID Front" style="width:100%; border-radius:12px; border:1px solid rgba(59,130,246,0.3); cursor:pointer;" onclick="window.open('${r.cnic_front_url}', '_blank')" /></div>` : ''}
+            ${r.cnic_back_url ? `<div><span class="field-label">ID Back</span><img src="${r.cnic_back_url}" alt="ID Back" style="width:100%; border-radius:12px; border:1px solid rgba(59,130,246,0.3); cursor:pointer;" onclick="window.open('${r.cnic_back_url}', '_blank')" /></div>` : ''}
+            ${r.selfie_url ? `<div><span class="field-label">Live Selfie</span><img src="${r.selfie_url}" alt="Selfie" style="width:100%; border-radius:12px; border:1px solid rgba(59,130,246,0.3); cursor:pointer;" onclick="window.open('${r.selfie_url}', '_blank')" /></div>` : ''}
+            ${r.video_url ? `<div style="grid-column:1 / -1;"><span class="field-label">Verification Video</span><video src="${r.video_url}" controls style="width:100%; max-height:400px; border-radius:12px; border:1px solid rgba(59,130,246,0.3);"></video></div>` : ''}
+          </div>
+          <div style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:center;">
+            <button class="btn" onclick="downloadInvestorZip(${r.id}, '${r.username || `user_${r.user_id}`}')">📦 Download Full Data (ZIP)</button>
+          </div>
+        </div>
+      `;
+      modal.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    /**
+     * Triggers a backend-generated ZIP download of an investor's documents.
+     * @param {string|number} requestId - The ID of the investor request.
+     * @param {string} username - The username to use in the filename.
+     */
+    async function downloadInvestorZip(requestId, username) {
+      try {
+        const url = `/api/admin/investor/requests/${encodeURIComponent(requestId)}/download-zip`;
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${username}_investor_data.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {
+        console.error('Download error:', err);
+        alert('Failed to download ZIP file');
+      }
+    }
+
+    /**
+     * Opens the detailed learner application view for a specific request.
+     * @param {string|number} requestId - The ID of the learner request.
+     */
+    function viewUserFromRequest(requestId) {
+      viewLearner(requestId);
+    }
+
+    /**
+     * Navigation helper: Switches to the 'Users' tab and scrolls to a specific user row.
+     * @param {string} username - The username of the user to locate.
+     */
+    function viewUserByUsername(username) {
+      setActiveTab('users');
+      refreshUsers('username', username || '');
+      const body = document.getElementById('usersBody');
+      if (!body) return;
+      
+      // Polling mechanism to ensure the row is rendered before attempting to scroll
+      let tries = 0;
+      const timer = setInterval(() => {
+        tries++;
+        const row = body.querySelector(`tr[data-username="${CSS.escape(username || '')}"]`);
+        if (row) {
+          row.classList.add('row-highlight');
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          clearInterval(timer);
+        } else if (tries > 20) {
+          clearInterval(timer);
+        }
+      }, 100);
+    }
+  </script>
+</body>
+</html>

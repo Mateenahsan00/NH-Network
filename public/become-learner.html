@@ -1,0 +1,786 @@
+  <!-- 
+    NH Network - Learner Application Portal (become-learner.html)
+    
+    This page serves as the enrollment portal for users wishing to join the structured
+    crypto learning program. It collects personal details, educational background,
+    and course preferences.
+    
+    Key Features:
+    - Automated profile pre-filling from existing user data.
+    - Multi-step validation for personal and contact information.
+    - Integrated terms and conditions flow with state persistence.
+    - Temporary and permanent image upload handling for profile verification.
+    - Real-time application status monitoring (Pending/Approved/Accepted).
+  -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NH Network - Become a Learner</title>
+  
+  <!-- Fonts: Inter for UI clarity and Montserrat for branding/headings -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* 
+      ==========================================================================
+      GLOBAL STYLES & DESIGN TOKENS
+      ==========================================================================
+      The design follows a modern dark theme with "Glassmorphism" effects,
+      consistent with the rest of the NH Network dashboard.
+    */
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Inter", sans-serif; }
+    
+    :root {
+      --bg-dark: #0f1419;           /* Deep dark background for high contrast */
+      --bg-card: rgba(59, 130, 246, 0.08); /* Translucent card background */
+      --border-color: rgba(59, 130, 246, 0.15); /* Soft borders for glass effect */
+      --text-primary: #ffffff;      /* High emphasis text */
+      --text-secondary: #cbd5e0;    /* Medium emphasis text */
+      --text-muted: #a0aec0;        /* Low emphasis text */
+      --accent-blue: #3b82f6;       /* Primary action color */
+      --accent-purple: #8b5cf6;     /* Secondary brand color */
+      --success: #22c55e;           /* Positive status color */
+      --error: #ef4444;             /* Error/Alert status color */
+      --radius-lg: 16px;            /* Corner radius for main containers */
+      --radius-md: 10px;            /* Corner radius for interactive elements */
+      --shadow-soft: 0 8px 32px rgba(0,0,0,0.3); /* Subtle depth shadow */
+    }
+
+    body { 
+      background: var(--bg-dark); 
+      color: var(--text-primary); 
+      overflow-x: hidden; 
+      min-height: 100vh; 
+      position: relative; 
+    }
+    
+    /* Decorative background with radial gradients to create depth */
+    body::before { 
+      content:''; 
+      position: fixed; 
+      inset:0; 
+      background: 
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.1), transparent), 
+        radial-gradient(ellipse 80% 80% at 80% 80%, rgba(139, 92, 246, 0.08), transparent); 
+      pointer-events:none; 
+      z-index:-1; 
+    }
+    
+    a { text-decoration: none; color: inherit; }
+    
+    /* Navigation Header: Implements blur effect and sticky positioning */
+    header { 
+      position: sticky; 
+      top: 0; 
+      z-index: 10; 
+      width: 100%; 
+      padding: 1.5rem 5%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      background: rgba(15,20,25,0.8); 
+      backdrop-filter: blur(20px); 
+      border-bottom: 1px solid rgba(59,130,246,0.1); 
+      box-shadow: var(--shadow-soft); 
+    }
+    
+    .brand { display: inline-flex; align-items: center; gap: 1rem; }
+    
+    /* Logo Branding with gradient background and shadow */
+    .logo-icon { 
+      width: 48px; height: 48px; border-radius: 12px; 
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); 
+      display:flex; align-items:center; justify-content:center; 
+      font-weight:800; font-size:20px; color:#fff; 
+      box-shadow: 0 8px 24px rgba(59,130,246,0.3); 
+    }
+    .logo-text { 
+      font-size:14px; font-weight:700; letter-spacing:1px; 
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6); 
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+      background-clip: text; 
+    }
+    
+    /* Standardized button style with hover transitions */
+    .btn { 
+      border: none; border-radius: var(--radius-md); 
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); 
+      color: #fff; font-weight: 600; font-size: 14px; 
+      padding: 0.85rem 2rem; cursor: pointer; 
+      transition: all 0.3s ease; 
+      box-shadow: 0 4px 20px rgba(59,130,246,0.4); 
+    }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(59,130,246,0.6); }
+    .btn[disabled] { opacity: 0.6; cursor: not-allowed; transform: none; }
+    
+    .app-main { max-width: 900px; margin: 0 auto; padding: 3rem 24px 40px; }
+    
+    /* Typography: Uses gradients for high-impact titles */
+    .page-title { 
+      font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 0.5rem; 
+      background: linear-gradient(135deg, #ffffff 0%, #a0aec0 100%); 
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+      background-clip: text; 
+    }
+    .page-subtitle { font-size: 16px; color: var(--text-secondary); margin-bottom: 2rem; }
+    
+    /* Glassmorphism Panel Container */
+    .panel { 
+      background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.06) 100%); 
+      border: 1px solid var(--border-color); 
+      border-radius: var(--radius-lg); 
+      padding: 2rem; 
+      backdrop-filter: blur(20px); 
+      box-shadow: var(--shadow-soft); 
+    }
+    
+    /* Form Layout Grid: 2-column on large screens, single column on small */
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .form-field { display: flex; flex-direction: column; gap: 0.6rem; }
+    .form-label { font-size: 13px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+    
+    /* Styled Inputs and Selects with focus states */
+    .form-input, .form-select { 
+      border-radius: var(--radius-md); 
+      border: 1.5px solid rgba(59,130,246,0.25); 
+      padding: 1rem 1.2rem; font-size: 14px; color: #fff; 
+      background: rgba(15,20,25,0.5); 
+      backdrop-filter: blur(10px); 
+      transition: all 0.3s ease; 
+    }
+    
+    /* 
+      Read-only input styling to visually indicate that fields are auto-filled 
+      and cannot be modified by the user.
+    */
+    .form-input[readonly] {
+      background: rgba(59, 130, 246, 0.05); /* Slightly different background */
+      border-color: rgba(59, 130, 246, 0.1); /* Faded border */
+      color: var(--text-secondary); /* Muted text color */
+      cursor: not-allowed; /* Cursor indicates no interaction */
+    }
+
+    .form-input:focus, .form-select:focus { 
+      outline: none; border-color: var(--accent-blue); 
+      background: rgba(15,20,25,0.8); 
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2); 
+    }
+
+    /* Prevent focus outline on read-only fields */
+    .form-input[readonly]:focus {
+      border-color: rgba(59, 130, 246, 0.1);
+      box-shadow: none;
+    }
+    
+    /* Status Notification Banners (Success/Pending/Errors) */
+    .status-banner { 
+      display: none; margin-bottom: 1rem; padding: 1rem 1.2rem; border-radius: 12px; 
+      border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.15); 
+      color: #86efac; font-size: 14px; 
+    }
+    .status-banner.visible { display: block; }
+    .status-muted { 
+      display: none; margin-bottom: 1rem; padding: 1rem 1.2rem; border-radius: 12px; 
+      border: 1px solid rgba(59,130,246,0.2); background: rgba(59,130,246,0.08); 
+      color: var(--text-secondary); font-size: 14px; 
+    }
+    .status-muted.visible { display: block; }
+    
+    .actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+    
+    /* Checkbox & Terms Styling */
+    .form-check { 
+      display:flex; align-items:flex-start; gap:10px; margin-top:1rem; 
+      padding:0.8rem 1rem; border:1px solid var(--border-color); 
+      border-radius: var(--radius-md); background: rgba(59,130,246,0.06); 
+    }
+    .form-check input[type="checkbox"] { width:18px; height:18px; accent-color: var(--accent-blue); }
+    .form-check-label { font-size:14px; color:#e5e7eb; line-height:1.6; }
+    .link { color: var(--accent-blue); font-weight:600; cursor: pointer; text-decoration: underline; }
+    
+    /* Validation Feedback */
+    .validation-error { display:none; margin-top:8px; color: #ef4444; font-size: 13px; }
+    .validation-error.visible { display:block; }
+    
+    footer { text-align: center; padding: 3rem 5%; border-top: 1px solid rgba(59,130,246,0.1); background: rgba(15,20,25,0.5); font-size: 13px; color: var(--text-muted); margin-top: auto; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/" class="brand">
+      <div class="logo-icon">NH</div>
+      <div class="logo-text">NETWORK</div>
+    </a>
+    <div style="display:flex; align-items:center; gap:0.75rem;">
+      <button class="btn" onclick="window.location.href='dashboard.html'">Back</button>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- Header Section: Context for the learner application -->
+    <header style="margin-bottom:16px;">
+      <h1 class="page-title">Become a Learner</h1>
+      <p class="page-subtitle">Fill the form to request access to structured crypto learning.</p>
+    </header>
+
+    <div class="panel">
+      <!-- Status Banners: Inform user of application progress or outcomes -->
+      <div id="pendingBanner" class="status-muted">Your request has been sent. Please wait for admin approval.</div>
+      <div id="successBanner" class="status-banner">Your form is submitted. Now admin can review your request.</div>
+
+      <!-- 
+        LEARNER ENROLLMENT FORM
+        -----------------------
+        This form supports both JSON data and file uploads (multipart/form-data).
+        It is validated client-side before submission.
+      -->
+      <form id="learnerForm" enctype="multipart/form-data">
+        <div class="form-grid">
+          <!-- Step 1: Basic Identity (Read-Only as these are auto-filled from user profile) -->
+          <div class="form-field">
+            <!-- Added lock icon and auto-filled tag for user clarity -->
+            <label class="form-label" for="nameInput">Name 🔒 <span style="font-size:10px; color:var(--text-muted);">(auto-filled)</span></label>
+            <!-- Field is set to readonly to prevent manual editing of verified profile data -->
+            <input id="nameInput" class="form-input" type="text" placeholder="Your full name" readonly />
+            <div id="nameError" class="validation-error">Please enter your full name</div>
+          </div>
+          <div class="form-field">
+            <!-- Added lock icon and auto-filled tag for user clarity -->
+            <label class="form-label" for="emailInput">Gmail 🔒 <span style="font-size:10px; color:var(--text-muted);">(auto-filled)</span></label>
+            <!-- Field is set to readonly to prevent manual editing of verified profile data -->
+            <input id="emailInput" class="form-input" type="email" placeholder="you@gmail.com" readonly />
+            <div id="emailError" class="validation-error">Please enter a valid email address</div>
+          </div>
+          <div class="form-field">
+            <!-- Added lock icon and auto-filled tag for user clarity -->
+            <label class="form-label" for="usernameInput">Username 🔒 <span style="font-size:10px; color:var(--text-muted);">(auto-filled)</span></label>
+            <!-- Field is set to readonly to prevent manual editing of verified profile data -->
+            <input id="usernameInput" class="form-input" type="text" placeholder="yourusername" readonly />
+          </div>
+          
+          <!-- Step 2: Contact Information with Global Country Codes -->
+          <div class="form-field" style="grid-column: 1 / -1;">
+            <label class="form-label" for="phoneInput">Phone Number</label>
+            <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+              <select id="countryCodeSelect" class="form-select" style="width: 180px; flex-shrink: 0;">
+                <!-- Comprehensive list of country codes for global accessibility -->
+                <option value="+1">🇺🇸 +1 (US/CA)</option>
+                <option value="+44">🇬🇧 +44 (UK)</option>
+                <option value="+92" selected>🇵🇰 +92 (Pakistan)</option>
+                <option value="+91">🇮🇳 +91 (India)</option>
+                <option value="+86">🇨🇳 +86 (China)</option>
+                <option value="+81">🇯🇵 +81 (Japan)</option>
+                <option value="+49">🇩🇪 +49 (Germany)</option>
+                <option value="+33">🇫🇷 +33 (France)</option>
+                <option value="+39">🇮🇹 +39 (Italy)</option>
+                <option value="+34">🇪🇸 +34 (Spain)</option>
+                <option value="+61">🇦🇺 +61 (Australia)</option>
+                <option value="+971">🇦🇪 +971 (UAE)</option>
+                <option value="+966">🇸🇦 +966 (Saudi Arabia)</option>
+                <option value="+27">🇿🇦 +27 (South Africa)</option>
+                <option value="+55">🇧🇷 +55 (Brazil)</option>
+                <option value="+52">🇲🇽 +52 (Mexico)</option>
+                <option value="+7">🇷🇺 +7 (Russia)</option>
+                <option value="+82">🇰🇷 +82 (South Korea)</option>
+                <option value="+65">🇸🇬 +65 (Singapore)</option>
+                <option value="+60">🇲🇾 +60 (Malaysia)</option>
+                <option value="+62">🇮🇩 +62 (Indonesia)</option>
+                <option value="+84">🇻🇳 +84 (Vietnam)</option>
+                <option value="+66">🇹🇭 +66 (Thailand)</option>
+                <option value="+63">🇵🇭 +63 (Philippines)</option>
+                <option value="+880">🇧🇩 +880 (Bangladesh)</option>
+                <option value="+94">🇱🇰 +94 (Sri Lanka)</option>
+                <option value="+20">🇪🇬 +20 (Egypt)</option>
+                <option value="+90">🇹🇷 +90 (Turkey)</option>
+                <option value="+31">🇳🇱 +31 (Netherlands)</option>
+                <option value="+32">🇧🇪 +32 (Belgium)</option>
+                <option value="+41">🇨🇭 +41 (Switzerland)</option>
+                <option value="+46">🇸🇪 +46 (Sweden)</option>
+                <option value="+47">🇳特 +47 (Norway)</option>
+                <option value="+45">🇩🇰 +45 (Denmark)</option>
+                <option value="+358">🇫🇮 +358 (Finland)</option>
+                <option value="+48">🇵🇱 +48 (Poland)</option>
+                <option value="+351">🇵🇹 +351 (Portugal)</option>
+                <option value="+30">🇬🇷 +30 (Greece)</option>
+                <option value="+64">🇳🇿 +64 (New Zealand)</option>
+              </select>
+              <input id="phoneInput" class="form-input" type="text" placeholder="e.g. 3001234567" style="flex: 1;" />
+            </div>
+            <div id="phoneError" class="validation-error">Please enter a valid phone number</div>
+          </div>
+          
+          <!-- Step 3: Course Selection & Academic Background -->
+          <div class="form-field">
+            <label class="form-label" for="courseSelect">Choose Your Course</label>
+            <select id="courseSelect" class="form-select">
+              <option value="Crypto Basics">Crypto Basics</option>
+              <option value="Blockchain Essentials">Blockchain Essentials</option>
+              <option value="DeFi Foundations">DeFi Foundations</option>
+              <option value="Trading Strategies">Trading Strategies</option>
+              <option value="Risk Management in Crypto">Risk Management in Crypto</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="educationSelect">Level of Education</label>
+            <select id="educationSelect" class="form-select">
+              <option value="Under Matric">Under Matric</option>
+              <option value="Matric">Matric</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Bachelor">Bachelor</option>
+              <option value="Master">Master</option>
+              <option value="PhD">PhD</option>
+            </select>
+          </div>
+          
+          <!-- Step 4: Verification Document (Image Upload) -->
+          <div class="form-field" style="grid-column: 1 / -1;">
+            <label class="form-label" for="imageInput">Upload Image</label>
+            <input id="imageInput" class="form-input" type="file" accept="image/jpeg,image/jpg,image/png" />
+            <div id="imageError" class="validation-error">Please upload a valid image file (JPG, JPEG, or PNG)</div>
+            
+            <!-- Real-time image preview container -->
+            <div id="imagePreview" style="margin-top: 1rem; display: none;">
+              <img id="previewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(59,130,246,0.3);" />
+            </div>
+          </div>
+        </div>
+        
+        <!-- Legal Acceptance Row: Terms must be read and checked before submission -->
+        <div class="form-check" id="termsRow">
+          <input id="termsCheck" type="checkbox" disabled />
+          <label for="termsCheck" class="form-check-label">Read our <a class="link" id="readTermsLink" href="learner-terms.html">Terms and Conditions</a></label>
+        </div>
+        <div id="termsError" class="validation-error">Please agree to the Terms and Conditions before submitting the form.</div>
+        
+        <!-- Form Actions -->
+        <div class="actions">
+          <button id="submitBtn" type="submit" class="btn" disabled>Submit</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 NH Network. All Rights Reserved.</p>
+  </footer>
+
+  <script>
+    /**
+     * Retrieves the current user's profile details to pre-populate form fields.
+     * Enhances UX by reducing repetitive data entry for registered users.
+     */
+    async function fetchProfilePrefill() {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) return;
+        const res = await fetch(`/api/user/profile?userId=${encodeURIComponent(userId)}`);
+        const data = await res.json();
+        const p = (data && data.profile) || {};
+        
+        // Populate inputs with existing profile data if available
+        const nameInput = document.getElementById('nameInput');
+        const emailInput = document.getElementById('emailInput');
+        const usernameInput = document.getElementById('usernameInput');
+        if (nameInput) nameInput.value = p.fullName || '';
+        if (emailInput) emailInput.value = p.email || '';
+        if (usernameInput) usernameInput.value = p.username || '';
+      } catch (err) {
+        console.warn('Failed to prefill profile:', err);
+      }
+    }
+
+    /**
+     * Checks the status of any existing learner application for the current user.
+     * If an application is 'pending', the form is disabled to prevent duplicate submissions.
+     */
+    async function checkStatusOnLoad() {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) { window.location.href = '/'; return; }
+        const res = await fetch(`/api/learner/request/status?userId=${encodeURIComponent(userId)}`);
+        const data = await res.json();
+        const status = (data && data.status) || null;
+        
+        // Attach status to window for global access during initialization
+        window.__lrStatus = status;
+        const form = document.getElementById('learnerForm');
+        const pendingBanner = document.getElementById('pendingBanner');
+        
+        if (status === 'pending') {
+          if (pendingBanner) pendingBanner.classList.add('visible');
+          // Disable all form interactions while request is under review
+          if (form) Array.from(form.elements).forEach(el => { el.disabled = true; });
+        }
+      } catch (err) {
+        console.error('Status check failed:', err);
+      }
+    }
+
+    /**
+     * CORE INITIALIZATION LOGIC
+     * -------------------------
+     * Sets up event listeners, handles session-based state persistence,
+     * and processes one-time notifications from the admin.
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+      // Reset success banner on fresh load
+      const successBannerInit = document.getElementById('successBanner');
+      if (successBannerInit) {
+        successBannerInit.classList.remove('visible');
+        successBannerInit.textContent = 'Your form is submitted. Now admin can review your request.';
+      }
+      
+      fetchProfilePrefill();
+      checkStatusOnLoad();
+
+      /**
+       * Handle One-Time Messages/Notifications
+       * Displays admin feedback regarding previous application outcomes.
+       */
+      (async function() {
+        try {
+          const userId = localStorage.getItem('userId');
+          if (!userId) return;
+          const res = await fetch(`/api/learner/message?userId=${encodeURIComponent(userId)}`);
+          const data = await res.json();
+          const msg = data && data.message;
+          
+          if (msg && msg.id) {
+            // Mark message as read immediately to ensure it's only shown once
+            try {
+              await fetch('/api/learner/message/read', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ id: msg.id, userId }) 
+              });
+            } catch (_) {}
+
+            const banner = document.getElementById('successBanner');
+            if (banner) {
+              banner.textContent = msg.text || banner.textContent;
+              banner.classList.add('visible');
+              
+              // Add a manual close button to the status banner
+              const closeBtn = document.createElement('button');
+              closeBtn.className = 'btn secondary';
+              closeBtn.style.padding = '6px 10px';
+              closeBtn.style.float = 'right';
+              closeBtn.textContent = '✖';
+              banner.appendChild(closeBtn);
+              
+              closeBtn.addEventListener('click', async () => {
+                banner.classList.remove('visible');
+                // If application was approved, redirect to the learning portal
+                if (msg.type === 'approved') {
+                  window.location.href = '/learning.html';
+                }
+              });
+            }
+          } else {
+            // Automatic redirect if status is already approved
+            if (window.__lrStatus === 'approved' || window.__lrStatus === 'accepted') {
+              window.location.href = '/learning.html';
+            }
+          }
+        } catch (err) {
+          console.error('Message retrieval failed:', err);
+        }
+      })();
+
+      // DOM Element References
+      const form = document.getElementById('learnerForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const successBanner = document.getElementById('successBanner');
+      const termsCheck = document.getElementById('termsCheck');
+      const termsError = document.getElementById('termsError');
+      const readTermsLink = document.getElementById('readTermsLink');
+      const nameInputEl = document.getElementById('nameInput');
+      const emailInputEl = document.getElementById('emailInput');
+      const courseSelectEl = document.getElementById('courseSelect');
+      const educationSelectEl = document.getElementById('educationSelect');
+      const nameErrorEl = document.getElementById('nameError');
+      const emailErrorEl = document.getElementById('emailError');
+
+      /**
+       * SESSION PERSISTENCE
+       * -------------------
+       * Recovers form data from sessionStorage. This is crucial because reading the 
+       * Terms & Conditions redirects the user to a different page.
+       */
+      try {
+        const saved = sessionStorage.getItem('nh_learner_form_data');
+        const flag = sessionStorage.getItem('nh_terms_confirmed');
+        if (saved) {
+          const s = JSON.parse(saved);
+          if (nameInputEl) nameInputEl.value = s.name || '';
+          if (emailInputEl) emailInputEl.value = s.email || '';
+          if (document.getElementById('usernameInput')) document.getElementById('usernameInput').value = s.username || '';
+          if (document.getElementById('phoneInput')) document.getElementById('phoneInput').value = s.phone || '';
+          if (document.getElementById('countryCodeSelect')) document.getElementById('countryCodeSelect').value = s.countryCode || '+92';
+          if (courseSelectEl) courseSelectEl.value = s.course || courseSelectEl.value;
+          if (educationSelectEl) educationSelectEl.value = s.education || educationSelectEl.value;
+        }
+        if (flag === '1' && termsCheck) {
+          termsCheck.checked = true;
+        }
+      } catch (err) {
+        console.warn('Session recovery failed:', err);
+      }
+
+      // Tracking user interaction for validation feedback
+      const touched = { name: false, email: false, phone: false };
+
+      if (termsCheck) {
+        termsCheck.addEventListener('change', () => {
+          updateSubmitState();
+        });
+      }
+
+      /**
+       * Handle Terms & Conditions Navigation
+       * Persists current form state before navigating away to ensure no data loss.
+       */
+      if (readTermsLink) {
+        readTermsLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          try {
+            const payload = {
+              name: document.getElementById('nameInput').value.trim(),
+              email: document.getElementById('emailInput').value.trim(),
+              username: document.getElementById('usernameInput').value.trim(),
+              phone: document.getElementById('phoneInput').value.trim(),
+              countryCode: document.getElementById('countryCodeSelect').value,
+              course: document.getElementById('courseSelect').value,
+              education: document.getElementById('educationSelect').value
+            };
+            sessionStorage.setItem('nh_learner_form_data', JSON.stringify(payload));
+            sessionStorage.setItem('nh_terms_return_to', 'become-learner.html');
+          } catch (_) {}
+          window.location.href = 'learner-terms.html#flow=learner';
+        });
+      }
+
+      const phoneInput = document.getElementById('phoneInput');
+      const phoneError = document.getElementById('phoneError');
+      const countryCodeSelect = document.getElementById('countryCodeSelect');
+
+      // Helper: RFC 5322 compliant email validation
+      function isEmailValid(v) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
+      }
+
+      /**
+       * GLOBAL VALIDATION ENGINE
+       * ------------------------
+       * Dynamically updates UI error states and manages the disabled state of the submit button.
+       * 
+       * @param {boolean} showAllErrors - Forces all errors to show regardless of 'touched' state.
+       */
+      function updateSubmitState(showAllErrors = false) {
+        const nameOk = !!(nameInputEl && nameInputEl.value.trim());
+        const emailOk = !!(emailInputEl && isEmailValid(emailInputEl.value));
+        const courseOk = !!(courseSelectEl && courseSelectEl.value);
+        const educationOk = !!(educationSelectEl && educationSelectEl.value);
+        const termsOk = !!(termsCheck && termsCheck.checked);
+        const phoneVal = (phoneInput && phoneInput.value || '').trim();
+        const phoneOk = !phoneVal || /^\d+$/.test(phoneVal.replace(/\s|-/g, ''));
+        
+        // Toggle visibility of error messages based on validation results and user interaction
+        if (nameErrorEl) nameErrorEl.classList.toggle('visible', (!nameOk) && (touched.name || showAllErrors));
+        if (emailErrorEl) emailErrorEl.classList.toggle('visible', (!emailOk) && (touched.email || showAllErrors));
+        if (phoneError) phoneError.classList.toggle('visible', (!phoneOk && !!phoneVal) && (touched.phone || showAllErrors));
+        if (termsError) termsError.classList.toggle('visible', !termsOk && showAllErrors);
+        
+        const canSubmit = nameOk && emailOk && courseOk && educationOk && phoneOk && termsOk;
+        if (submitBtn) submitBtn.disabled = !canSubmit;
+      }
+      
+      // Input Listeners: Trigger validation updates on user input
+      if (phoneInput) {
+        phoneInput.addEventListener('input', () => updateSubmitState());
+        phoneInput.addEventListener('blur', () => { touched.phone = true; updateSubmitState(); });
+      }
+      if (nameInputEl) { 
+        nameInputEl.addEventListener('input', () => updateSubmitState()); 
+        nameInputEl.addEventListener('blur', () => { touched.name = true; updateSubmitState(); }); 
+      }
+      if (emailInputEl) { 
+        emailInputEl.addEventListener('input', () => updateSubmitState()); 
+        emailInputEl.addEventListener('blur', () => { touched.email = true; updateSubmitState(); }); 
+      }
+      if (courseSelectEl) courseSelectEl.addEventListener('change', () => updateSubmitState());
+      if (educationSelectEl) educationSelectEl.addEventListener('change', () => updateSubmitState());
+
+      /**
+       * IMAGE PROCESSING & PREVIEW
+       * --------------------------
+       * Handles file validation (type and size) and generates a temporary URL
+       * for real-time previewing before final form submission.
+       */
+      const imageInput = document.getElementById('imageInput');
+      const imageError = document.getElementById('imageError');
+      const imagePreview = document.getElementById('imagePreview');
+      const previewImg = document.getElementById('previewImg');
+      let savedImageUrl = null;
+      
+      if (imageInput) {
+        imageInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            // Security: Restricted to standard web image formats
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            if (!validTypes.includes(file.type)) {
+              if (imageError) {
+                imageError.textContent = 'Please upload a valid image file (JPG, JPEG, or PNG)';
+                imageError.classList.add('visible');
+              }
+              imageInput.value = '';
+              if (imagePreview) imagePreview.style.display = 'none';
+              return;
+            }
+
+            // Performance/Storage: Max size limit 5MB
+            if (file.size > 5 * 1024 * 1024) {
+              if (imageError) {
+                imageError.textContent = 'Image size must be less than 5MB';
+                imageError.classList.add('visible');
+              }
+              imageInput.value = '';
+              if (imagePreview) imagePreview.style.display = 'none';
+              return;
+            }
+
+            if (imageError) imageError.classList.remove('visible');
+
+            // Asynchronously upload the image to a temporary storage for previewing
+            (async () => {
+              try {
+                const fd = new FormData();
+                fd.append('image', file);
+                const res = await fetch('/api/learner/request/image-temp', { method: 'POST', body: fd });
+                const data = await res.json();
+                
+                if (!res.ok || !data.success || !data.tempImageUrl) {
+                  if (imageError) { 
+                    imageError.textContent = data.error || 'Temporary upload failed'; 
+                    imageError.classList.add('visible'); 
+                  }
+                  return;
+                }
+                
+                savedImageUrl = data.tempImageUrl;
+                try { sessionStorage.setItem('nh_learner_image_url', savedImageUrl); } catch (_) {}
+                if (previewImg) previewImg.src = savedImageUrl;
+                if (imagePreview) imagePreview.style.display = 'block';
+              } catch (err) {
+                console.error('Image temp upload failed:', err);
+                if (imageError) { imageError.textContent = 'Network error during upload'; imageError.classList.add('visible'); }
+              }
+            })();
+          } else {
+            if (imagePreview) imagePreview.style.display = 'none';
+            savedImageUrl = null;
+            try { sessionStorage.removeItem('nh_learner_image_url'); } catch (_) {}
+          }
+        });
+      }
+
+      // Recover image preview from session storage if available
+      try {
+        const cachedUrl = sessionStorage.getItem('nh_learner_image_url');
+        if (cachedUrl) {
+          savedImageUrl = cachedUrl;
+          if (previewImg) previewImg.src = savedImageUrl;
+          if (imagePreview) imagePreview.style.display = 'block';
+        }
+      } catch (_) {}
+
+      /**
+       * FINAL FORM SUBMISSION
+       * ---------------------
+       * Aggregates all data into a FormData object and handles the API call.
+       */
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Final sanity check for terms acceptance
+        if (!termsCheck.checked) {
+          updateSubmitState(true);
+          return;
+        }
+        
+        const phone = phoneInput.value.trim();
+        const countryCode = countryCodeSelect.value;
+        touched.name = true; touched.email = true; touched.phone = true;
+        updateSubmitState(true);
+        
+        // Final phone format check
+        if (!/^\d+$/.test(phone.replace(/\s|-/g, '')) && !!phone) {
+          return;
+        }
+        
+        try {
+          const userId = localStorage.getItem('userId');
+          if (!userId) { window.location.href = '/'; return; }
+          
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner"></span> Submitting...';
+          
+          const fd = new FormData();
+          fd.append('userId', userId);
+          fd.append('name', nameInputEl.value.trim());
+          fd.append('email', emailInputEl.value.trim());
+          fd.append('username', document.getElementById('usernameInput').value.trim());
+          fd.append('phone', phone);
+          fd.append('countryCode', countryCode);
+          fd.append('course', courseSelectEl.value);
+          fd.append('educationLevel', educationSelectEl.value);
+          
+          // Attach image file or the temporary URL from session
+          if (imageInput.files && imageInput.files[0]) {
+            fd.append('image', imageInput.files[0]);
+          } else if (savedImageUrl) {
+            fd.append('imageUrl', savedImageUrl);
+          }
+          
+          const res = await fetch('/api/learner/request', { method: 'POST', body: fd });
+          const data = await res.json();
+          
+          if (!res.ok || !data.success) {
+            alert(data.error || 'Enrollment request failed. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit';
+            return;
+          }
+          
+          // Successful submission: Clear session and notify user
+          if (successBanner) successBanner.classList.add('visible');
+          try { 
+            sessionStorage.removeItem('nh_terms_confirmed'); 
+            sessionStorage.removeItem('nh_learner_form_data'); 
+            sessionStorage.removeItem('nh_learner_image_url'); 
+          } catch (_) {}
+          
+          setTimeout(() => {
+            window.location.href = '/dashboard.html';
+          }, 1500);
+          
+        } catch (err) {
+          console.error('Submission error:', err);
+          alert('Server error occurred. Please check your connection.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit';
+        }
+      });
+
+      // Initial validation state trigger
+      updateSubmitState();
+    });
+  </script>
+  <script src="notifications.js"></script>
+    <script src="footer.js"></script>
+</body>
+</html>

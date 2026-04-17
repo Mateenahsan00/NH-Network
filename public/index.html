@@ -1,0 +1,2332 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!-- Standard meta tags for character encoding and responsive viewport design -->
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>NH Network</title>
+        
+        <!-- External fonts: Inter for UI clarity and Montserrat for headings -->
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            /* 
+               Global Reset and Base Typography 
+               Ensures consistent rendering across different browsers.
+            */
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                font-family: "Inter", sans-serif;
+            }
+
+            /* 
+               Design Tokens 
+               Centralized variables for maintaining the 'Glassmorphism' UI aesthetic.
+               Colors, border-radii, and shadows are defined here for project-wide consistency.
+            */
+            :root {
+                --bg-dark: #0f1419;
+                --bg-card: rgba(59, 130, 246, 0.08);
+                --border-color: rgba(59, 130, 246, 0.15);
+                --text-primary: #ffffff;
+                --text-secondary: #cbd5e0;
+                --text-muted: #a0aec0;
+                --accent-blue: #3b82f6;
+                --accent-purple: #8b5cf6;
+                --success: #22c55e;
+                --error: #ef4444;
+                --radius-lg: 16px;
+                --radius-md: 10px;
+                --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.3);
+                --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.5);
+            }
+
+            /* 
+               Body Layout 
+               Configures the main container for a full-viewport, dark-themed experience.
+            */
+            body {
+                background: #0f1419;
+                color: var(--text-primary);
+                overflow-x: hidden;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                position: relative;
+            }
+
+            /* 
+               Animated Background 
+               Uses radial gradients to create a modern, depth-focused ambient background effect.
+            */
+            body::before {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background:
+                    radial-gradient(
+                        ellipse 80% 50% at 50% 0%,
+                        rgba(59, 130, 246, 0.1),
+                        transparent
+                    ),
+                    radial-gradient(
+                        ellipse 80% 80% at 80% 80%,
+                        rgba(139, 92, 246, 0.08),
+                        transparent
+                    );
+                pointer-events: none;
+                z-index: -1;
+            }
+
+            a {
+                text-decoration: none;
+                color: inherit;
+            }
+
+            /* 
+               Header Styles 
+               Implements a sticky glassmorphic navigation bar.
+            */
+            header {
+                width: 100%;
+                padding: 1.5rem 5%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: rgba(15, 20, 25, 0.8);
+                backdrop-filter: blur(20px);
+                border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+
+            /* 
+               Brand Identity 
+               Styles for the logo and brand text with interactive hover effects.
+            */
+            .brand {
+                display: inline-flex;
+                align-items: center;
+                gap: 1rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .brand:hover {
+                transform: scale(1.02);
+            }
+
+            .logo-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 800;
+                font-size: 20px;
+                color: #ffffff;
+                box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* Shimmer animation for the brand logo */
+            .logo-icon::before {
+                content: "";
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: linear-gradient(
+                    45deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.2),
+                    transparent
+                );
+                animation: shimmer 3s infinite;
+            }
+
+            @keyframes shimmer {
+                0% {
+                    transform: translate(-100%, -100%) rotate(45deg);
+                }
+                100% {
+                    transform: translate(100%, 100%) rotate(45deg);
+                }
+            }
+
+            .logo-text {
+                font-size: 14px;
+                font-weight: 700;
+                letter-spacing: 1px;
+                background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .nav-link {
+                color: var(--text-secondary);
+                font-weight: 600;
+                font-size: 14px;
+                transition: color 0.3s ease;
+                margin-right: 1.5rem;
+                text-decoration: none;
+            }
+
+            .nav-link:hover {
+                color: #ffffff;
+            }
+
+            /* 
+               Button Components 
+               Standardized button styles including primary (gradient) and outline (glass) variants.
+            */
+            .buttons {
+                display: flex;
+                gap: 1.5rem;
+                align-items: center;
+            }
+
+            .btn {
+                padding: 0.85rem 2.2rem;
+                border: none;
+                border-radius: var(--radius-md);
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* Primary CTA button with hover elevation and shine effect */
+            .btn-primary {
+                background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+                color: #ffffff;
+                box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+            }
+
+            .btn-primary::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.3),
+                    transparent
+                );
+                transition: left 0.5s ease;
+            }
+
+            .btn-primary:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 30px rgba(59, 130, 246, 0.6);
+            }
+
+            .btn-primary:hover::before {
+                left: 100%;
+            }
+
+            /* Secondary/Outline button with glass effect */
+            .btn-outline {
+                background: rgba(139, 92, 246, 0.15);
+                color: #e0e7ff;
+                border: 1.5px solid rgba(139, 92, 246, 0.4);
+                backdrop-filter: blur(10px);
+            }
+
+            .btn-outline:hover {
+                background: rgba(139, 92, 246, 0.25);
+                border-color: rgba(139, 92, 246, 0.6);
+                transform: translateY(-3px);
+                box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+            }
+
+            .btn[disabled] {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+            /* 
+               Hero Section Layout 
+               Main landing area split into content (left) and interactive/visuals (right).
+            */
+            .hero {
+                flex: 1 0 auto;
+                padding: 6rem 5%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* 
+               Hero Layout Inner 
+               Grid configuration for the landing page content.
+            */
+            .hero-inner {
+                max-width: 1400px;
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6rem;
+                align-items: center;
+            }
+
+            /* 
+               Hero Entrance Animations 
+               Adds dynamic movement to the left and right columns upon page load.
+            */
+            .hero-left {
+                animation: fadeInLeftHero 1s ease-out;
+            }
+
+            .hero-right {
+                animation: fadeInRightHero 1s ease-out;
+            }
+
+            @keyframes fadeInLeftHero {
+                from {
+                    opacity: 0;
+                    transform: translateX(-60px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            @keyframes fadeInRightHero {
+                from {
+                    opacity: 0;
+                    transform: translateX(60px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            /* 
+               Hero Typography & UI Elements 
+               Styles for titles, subtitles, and badges in the hero section.
+            */
+            .badge {
+                display: inline-block;
+                padding: 0.6rem 1.2rem;
+                background: rgba(59, 130, 246, 0.1);
+                border: 1px solid rgba(59, 130, 246, 0.3);
+                border-radius: 25px;
+                color: #3b82f6;
+                font-size: 13px;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                margin-bottom: 2rem;
+                backdrop-filter: blur(10px);
+            }
+
+            .hero-eyebrow {
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                letter-spacing: 0.16em;
+                color: #3b82f6;
+                margin-bottom: 1rem;
+            }
+
+            h1 {
+                font-size: 56px;
+                font-weight: 900;
+                line-height: 1.2;
+                margin-bottom: 1.5rem;
+                background: linear-gradient(135deg, #ffffff 0%, #a0aec0 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                letter-spacing: -1px;
+            }
+
+            .subtitle {
+                font-size: 18px;
+                color: var(--text-secondary);
+                margin-bottom: 2.5rem;
+                line-height: 1.8;
+                max-width: 520px;
+            }
+
+            .hero-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1.5rem;
+                margin-bottom: 3rem;
+            }
+
+            /* 
+               Hero Meta Information 
+               Displays platform trust signals and features.
+            */
+            .hero-meta {
+                display: flex;
+                gap: 3rem;
+                flex-wrap: wrap;
+                font-size: 14px;
+                color: var(--text-secondary);
+            }
+
+            .hero-meta-item {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+
+            .hero-meta-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                flex-shrink: 0;
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            }
+
+            /* 
+               Platform Statistics Grid 
+               Visual cards representing live system metrics.
+            */
+            .hero-cards {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 2rem;
+            }
+
+            /* 
+               Statistic Card Styling 
+               Individual cards with glassmorphic backgrounds and floating entrance animations.
+            */
+            .stat-card {
+                padding: 2.2rem;
+                background: linear-gradient(
+                    135deg,
+                    rgba(59, 130, 246, 0.08) 0%,
+                    rgba(139, 92, 246, 0.06) 100%
+                );
+                border: 1px solid var(--border-color);
+                border-radius: var(--radius-lg);
+                backdrop-filter: blur(20px);
+                transition: all 0.4s ease;
+                opacity: 0;
+                animation: cardFloat 0.8s ease-out forwards;
+                position: relative;
+                overflow: hidden;
+            }
+
+            @keyframes cardFloat {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            /* Sequential animation delays for stat cards */
+            .stat-card:nth-child(1) {
+                animation-delay: 0.1s;
+            }
+            .stat-card:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .stat-card:nth-child(3) {
+                animation-delay: 0.3s;
+            }
+            .stat-card:nth-child(4) {
+                animation-delay: 0.4s;
+            }
+
+            .stat-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(
+                    135deg,
+                    transparent,
+                    rgba(139, 92, 246, 0.1),
+                    transparent
+                );
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+
+            .stat-card:hover {
+                border-color: rgba(59, 130, 246, 0.4);
+                transform: translateY(-8px);
+                box-shadow: 0 20px 50px rgba(59, 130, 246, 0.2);
+            }
+
+            .stat-card:hover::before {
+                opacity: 1;
+            }
+
+            .stat-label {
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 1.5px;
+                color: #3b82f6;
+                text-transform: uppercase;
+                margin-bottom: 0.8rem;
+            }
+
+            .stat-value {
+                font-size: 40px;
+                font-weight: 900;
+                background: linear-gradient(135deg, #ffffff, #cbd5e0);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                margin-bottom: 0.6rem;
+                letter-spacing: -1px;
+            }
+
+            .stat-meta {
+                font-size: 14px;
+                color: var(--text-muted);
+                line-height: 1.6;
+            }
+
+            /* 
+               Authentication/Feature Highlight Card 
+               A dedicated card highlighting platform benefits.
+            */
+            .auth-card {
+                margin-top: 3.5rem;
+                padding: 2.2rem;
+                background: linear-gradient(
+                    135deg,
+                    rgba(59, 130, 246, 0.08) 0%,
+                    rgba(139, 92, 246, 0.06) 100%
+                );
+                border: 1px solid var(--border-color);
+                border-radius: var(--radius-lg);
+                backdrop-filter: blur(20px);
+                border-top: 1px solid rgba(59, 130, 246, 0.15);
+            }
+
+            .auth-card-title {
+                font-size: 22px;
+                font-weight: 800;
+                color: #ffffff;
+                margin-bottom: 1.2rem;
+            }
+
+            .auth-card-subtitle {
+                font-size: 14px;
+                color: var(--text-secondary);
+                margin-bottom: 2rem;
+                line-height: 1.7;
+            }
+
+            .auth-card-list {
+                list-style: none;
+                display: flex;
+                flex-direction: column;
+                gap: 1.4rem;
+                font-size: 14px;
+                color: var(--text-secondary);
+            }
+
+            .auth-card-list li {
+                display: flex;
+                align-items: flex-start;
+                gap: 1.2rem;
+            }
+
+            .auth-card-badge {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                color: #ffffff;
+                flex-shrink: 0;
+                box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+                font-weight: 700;
+            }
+
+            /* 
+               Footer Styles 
+               Simple, centered footer with consistent theme coloring.
+            */
+            footer {
+                text-align: center;
+                padding: 3rem 5%;
+                border-top: 1px solid rgba(59, 130, 246, 0.1);
+                background: rgba(15, 20, 25, 0.5);
+                font-size: 13px;
+                color: var(--text-muted);
+                margin-top: auto;
+            }
+
+            footer a {
+                color: #3b82f6;
+                text-decoration: none;
+                margin: 0 0.5rem;
+                font-weight: 600;
+                transition: color 0.3s ease;
+            }
+
+            footer a:hover {
+                color: #60a5fa;
+            }
+
+            /* 
+               Modal System 
+               Full-screen overlay for Login/Register forms with blur effect.
+            */
+            .modal {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.8);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000; /* Ensures modal is above all other content */
+                padding: 40px 16px;
+                backdrop-filter: blur(8px);
+                overflow-y: auto;
+            }
+
+            .modal-open {
+                display: flex;
+            }
+
+            /* 
+               Modal Content Container 
+               The actual glassmorphic card containing the forms.
+            */
+            .modal-content {
+                background: linear-gradient(
+                    135deg,
+                    rgba(20, 28, 35, 0.95) 0%,
+                    rgba(30, 40, 50, 0.95) 100%
+                );
+                border: 1px solid rgba(59, 130, 246, 0.2);
+                padding: 3rem;
+                border-radius: 20px;
+                width: 100%;
+                max-width: 500px;
+                position: relative;
+                animation: slideUpModal 0.4s ease-out;
+                backdrop-filter: blur(20px);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                margin-top: auto;
+                margin-bottom: auto;
+            }
+
+            @keyframes slideUpModal {
+                from {
+                    opacity: 0;
+                    transform: translateY(50px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .close-btn {
+                position: absolute;
+                top: 1.5rem;
+                right: 1.5rem;
+                background: rgba(59, 130, 246, 0.1);
+                border: none;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                font-size: 24px;
+                color: var(--text-muted);
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .close-btn:hover {
+                background: rgba(59, 130, 246, 0.2);
+                color: #ffffff;
+            }
+
+            .modal-title {
+                font-size: 28px;
+                font-weight: 800;
+                margin-bottom: 0.5rem;
+                color: #ffffff;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .modal-title .logo-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+                margin-right: 5px;
+            }
+
+            .modal-subtitle {
+                font-size: 14px;
+                color: var(--text-muted);
+                margin-bottom: 2.2rem;
+                line-height: 1.6;
+            }
+
+            /* 
+               Form Components 
+               Standardized input fields and labels for a cohesive user experience.
+            */
+            .form-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .field {
+                display: flex;
+                flex-direction: column;
+                gap: 0.7rem;
+            }
+
+            .field-label {
+                font-size: 13px;
+                font-weight: 600;
+                color: #e0e7ff;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .field-input {
+                padding: 1rem 1.2rem;
+                border: 1.5px solid rgba(59, 130, 246, 0.25);
+                border-radius: var(--radius-md);
+                font-size: 14px;
+                background: rgba(15, 20, 25, 0.5);
+                color: #ffffff;
+                transition: all 0.3s ease;
+                font-family: inherit;
+                backdrop-filter: blur(10px);
+            }
+
+            .field-input::placeholder {
+                color: #6b7280;
+            }
+
+            .field-input:focus {
+                outline: none;
+                border-color: #3b82f6;
+                background: rgba(15, 20, 25, 0.8);
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            }
+
+            /* Error states for input fields */
+            .field-error .field-input {
+                border-color: var(--error);
+                background: rgba(239, 68, 68, 0.1);
+            }
+
+            .error-text {
+                font-size: 12px;
+                color: #ef4444;
+                min-height: 1em;
+            }
+
+            /* 
+               Form Helpers 
+               Links and utility rows for "Forgot Password" or "Sign Up" prompts.
+            */
+            .helper-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin: 1rem 0;
+                font-size: 12px;
+                color: var(--text-muted);
+            }
+
+            .helper-link {
+                color: #3b82f6;
+                text-decoration: underline;
+                cursor: pointer;
+                transition: color 0.3s ease;
+            }
+
+            .helper-link:hover {
+                color: #60a5fa;
+            }
+
+            .form-footer-text {
+                text-align: center;
+                font-size: 13px;
+                margin-top: 1.5rem;
+                color: var(--text-muted);
+            }
+
+            .form-footer-text a {
+                color: #3b82f6;
+                text-decoration: underline;
+                cursor: pointer;
+                transition: color 0.3s ease;
+            }
+
+            .form-footer-text a:hover {
+                color: #60a5fa;
+            }
+
+            /* 
+               Status Banner 
+               Feedback mechanism for displaying success or error messages to the user.
+            */
+            .status-banner {
+                font-size: 13px;
+                border-radius: 999px;
+                padding: 1rem 1.2rem;
+                margin-bottom: 1.5rem;
+                display: none;
+                align-items: center;
+                gap: 0.75rem;
+            }
+
+            .status-banner.visible {
+                display: flex;
+            }
+
+            .status-banner.error {
+                background: rgba(239, 68, 68, 0.15);
+                color: #fca5a5;
+                border: 1px solid rgba(239, 68, 68, 0.3);
+            }
+
+            .status-banner.success {
+                background: rgba(34, 197, 94, 0.15);
+                color: #86efac;
+                border: 1px solid rgba(34, 197, 94, 0.3);
+            }
+
+            .status-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 999px;
+                flex-shrink: 0;
+            }
+
+            .status-dot.error {
+                background: #ef4444;
+            }
+            .status-dot.success {
+                background: #22c55e;
+            }
+
+            /* 
+               Password Validation UI 
+               Real-time feedback for password strength requirements.
+            */
+            .password-requirements {
+                margin-top: 0.75rem;
+                padding: 0.75rem 1rem;
+                background: rgba(15, 20, 25, 0.5);
+                border: 1px solid rgba(59, 130, 246, 0.15);
+                border-radius: var(--radius-md);
+                font-size: 12px;
+            }
+
+            .requirements-title {
+                color: var(--text-muted);
+                margin-bottom: 0.5rem;
+                font-weight: 500;
+            }
+
+            .requirements-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 0.35rem;
+            }
+
+            .requirements-list li {
+                color: var(--text-muted);
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                transition: color 0.3s ease;
+            }
+
+            .requirements-list li.valid {
+                color: #22c55e;
+            }
+
+            .req-icon {
+                font-size: 10px;
+                width: 14px;
+                text-align: center;
+                display: inline-block;
+            }
+
+            .requirements-list li.valid .req-icon {
+                color: #22c55e;
+            }
+
+            /* 
+               Responsive Design Media Queries 
+               Adjusts layout for tablets and mobile devices.
+            */
+            @media (max-width: 900px) {
+                header {
+                    padding-inline: 5%;
+                }
+                .hero-inner {
+                    grid-template-columns: 1fr;
+                    gap: 3rem;
+                }
+                .hero {
+                    padding-top: 3rem;
+                }
+                h1 {
+                    font-size: 36px;
+                }
+            }
+
+            @media (max-width: 600px) {
+                header {
+                    padding-inline: 5%;
+                }
+                .buttons {
+                    gap: 0.75rem;
+                }
+                .btn {
+                    padding: 0.7rem 1.5rem;
+                    font-size: 13px;
+                }
+                .hero-cards {
+                    grid-template-columns: 1fr;
+                }
+                .hero-meta {
+                    gap: 1.5rem;
+                }
+                .modal-content {
+                    padding: 2rem;
+                }
+                h1 {
+                    font-size: 28px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Global Header Container: Injected dynamically via navbar.js -->
+        <header id="global-header"></header>
+        <script src="navbar.js"></script>
+
+        <!-- 
+             Main Landing Page Content 
+             Organized into a 'Hero' section with left-side messaging and right-side interactive cards.
+        -->
+        <main class="hero">
+            <div class="hero-inner">
+                <!-- Left Column: Branding, Value Proposition, and Primary CTAs -->
+                <section class="hero-left">
+                    <div class="badge">Learn & Trade Crypto Anytime, Anywhere</div>
+                    <h1>The Smart Way to Learn & Trade Crypto</h1>
+                    <p class="subtitle">
+                       NH Network combines structured education, advanced trading tools, and real-time market data to transform you into a smarter, more confident investor.
+                    </p>
+
+                    <!-- Primary call-to-action buttons for account creation and login -->
+                    <div class="hero-actions">
+                        <button class="btn btn-primary" id="primarySignupCta">
+                            Create Free Account
+                        </button>
+                        <button class="btn btn-outline" id="primaryLoginCta">
+                            Already a member?
+                        </button>
+                    </div>
+
+                    <!-- Platform feature highlights -->
+                    <div class="hero-meta">
+                        <span class="hero-meta-item"
+                            ><span class="hero-meta-dot"></span> Multiple Deposit Options</span
+                        >
+                        <span class="hero-meta-item"
+                            ><span class="hero-meta-dot"></span> Real-time
+                            data</span
+                        >
+                        <span class="hero-meta-item"
+                            ><span class="hero-meta-dot"></span> 100%
+                            secure</span
+                        >
+                    </div>
+                </section>
+
+                <!-- Right Column: Live platform statistics and 'Why Us' highlights -->
+                <section class="hero-right">
+                    <div class="hero-cards">
+                        <!-- Individual statistic cards (populated via JS or backend) -->
+                        <article class="stat-card">
+                            <p class="stat-label">Active Learners</p>
+                            <p class="stat-value" id="statActiveLearners">0</p>
+                            <p class="stat-meta">
+                                Building sustainable investing habits daily.
+                            </p>
+                        </article>
+                        <article class="stat-card">
+                            <p class="stat-label">Assets Tracked</p>
+                            <p class="stat-value" id="statAssetsTracked">$0.00</p>
+                            <p class="stat-meta">
+                                Managed across simulated portfolios.
+                            </p>
+                        </article>
+                        <article class="stat-card">
+                            <p class="stat-label">Active Investors</p>
+                            <p class="stat-value" id="statActiveInvestors">0</p>
+                            <p class="stat-meta">
+                                Investing on the platform right now.
+                            </p>
+                        </article>
+                        <article class="stat-card">
+                            <p class="stat-label">System Uptime</p>
+                            <p class="stat-value" id="statSystemUptime">99.9%</p>
+                            <p class="stat-meta">
+                                Enterprise-grade reliability guaranteed.
+                            </p>
+                        </article>
+                        <article class="stat-card">
+                            <p class="stat-label">Live Market</p>
+                            <p class="stat-value" id="statMarketData">Real-time</p>
+                            <p class="stat-meta">
+                                Institutional-grade real-time data.
+                            </p>
+                        </article>
+                    </div>
+
+                    <!-- Highlight card summarizing platform advantages -->
+                    <div class="auth-card">
+                        <h2 class="auth-card-title">Why NH Network?</h2>
+                        <p class="auth-card-subtitle">
+                            Designed for serious investors who value education and real-world trading.
+                        </p>
+                        <ul class="auth-card-list">
+                            <li>
+                                <span class="auth-card-badge">✓</span>
+                                <span
+                                    >Personalized learning paths based on your
+                                    skill level.</span
+                                >
+                            </li>
+                            <li>
+                                <span class="auth-card-badge">✓</span>
+                                <span
+                                    >Professional-grade dashboard for direct market access.</span
+                                >
+                            </li>
+                            <li>
+                                <span class="auth-card-badge">✓</span>
+                                <span
+                                    >Advanced analytics and risk management
+                                    tools.</span
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Standard page footer with legal links -->
+        <footer>
+            <p>
+                © 2025 NH Network. All rights reserved. |
+                <a href="#">Privacy Policy</a> |
+                <a href="#">Terms of Service</a> |
+                <a href="#">Contact Support</a>
+            </p>
+        </footer>
+
+        <!-- 
+             Login Modal 
+             Provides an interface for existing users to authenticate.
+        -->
+        <div class="modal" id="loginModal" aria-hidden="true" role="dialog">
+            <div class="modal-content">
+                <!-- Close button for the modal -->
+                <span
+                    class="close-btn"
+                    data-close="loginModal"
+                    aria-label="Close"
+                    >&times;</span
+                >
+                <h2 class="modal-title">Welcome Back</h2>
+                <p class="modal-subtitle">
+                    Sign in to access your learning and investment dashboards.
+                </p>
+
+                <!-- Feedback banner for login status (errors/success) -->
+                <div
+                    class="status-banner error"
+                    id="loginStatus"
+                    aria-live="polite"
+                >
+                    <span class="status-dot error"></span>
+                    <span id="loginStatusText"></span>
+                </div>
+
+                <!-- Login form fields -->
+                <div class="form-grid">
+                    <div class="field" id="field-login-identity">
+                        <label class="field-label" for="loginEmailOrUser"
+                            >Email or Username</label
+                        >
+                        <input
+                            type="text"
+                            id="loginEmailOrUser"
+                            class="field-input"
+                            placeholder="your@email.com"
+                        />
+                        <p class="error-text" id="loginIdentityError"></p>
+                    </div>
+                    <div class="field" id="field-login-password">
+                        <label class="field-label" for="loginPassword"
+                            >Password</label
+                        >
+                        <input
+                            type="password"
+                            id="loginPassword"
+                            class="field-input"
+                            placeholder="Enter your password"
+                        />
+                        <p class="error-text" id="loginPasswordError"></p>
+                    </div>
+                </div>
+
+                <!-- Submit button for login -->
+                <button
+                    class="btn btn-primary"
+                    id="loginSubmit"
+                    style="width: 100%; margin-top: 1.5rem"
+                >
+                    Sign In
+                </button>
+
+                <!-- Modal footer links for account creation and password recovery -->
+                <div class="form-footer-text">
+                    Don't have an account?
+                    <a
+                        data-switch-from="loginModal"
+                        data-switch-to="signupModal"
+                        >Create one</a
+                    >
+                    |
+                    <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 
+             Signup Modal 
+             Multi-field registration form for new users.
+        -->
+        <div class="modal" id="signupModal" aria-hidden="true" role="dialog">
+            <div class="modal-content">
+                <span
+                    class="close-btn"
+                    data-close="signupModal"
+                    aria-label="Close"
+                    >&times;</span
+                >
+                <h2 class="modal-title">
+                    <div class="logo-icon" style="margin-right: 5px">NH</div>
+                    Create Your Account
+                </h2>
+                <p class="modal-subtitle">
+                    Join thousands of investors mastering crypto with NH Network
+                    today.
+                </p>
+
+                <!-- Feedback banner for registration status -->
+                <div class="status-banner" id="signupStatus" aria-live="polite">
+                    <span class="status-dot" id="signupStatusDot"></span>
+                    <span id="signupStatusText"></span>
+                </div>
+
+                <!-- Registration form fields -->
+                <div class="form-grid">
+                    <div class="field" id="field-signup-fullname">
+                        <label class="field-label" for="signupFullName"
+                            >Full Name</label
+                        >
+                        <input
+                            type="text"
+                            id="signupFullName"
+                            class="field-input"
+                            placeholder="John Doe"
+                        />
+                        <p class="error-text" id="signupFullNameError"></p>
+                    </div>
+                    <div class="field" id="field-signup-username">
+                        <label class="field-label" for="signupUsername"
+                            >Username</label
+                        >
+                        <input
+                            type="text"
+                            id="signupUsername"
+                            class="field-input"
+                            placeholder="johninvests"
+                        />
+                        <p class="error-text" id="signupUsernameError"></p>
+                    </div>
+                    <div class="field" id="field-signup-email">
+                        <label class="field-label" for="signupEmail"
+                            >Email Address</label
+                        >
+                        <input
+                            type="email"
+                            id="signupEmail"
+                            class="field-input"
+                            placeholder="your@email.com"
+                        />
+                        <p class="error-text" id="signupEmailError"></p>
+                    </div>
+                    <div class="field" id="field-signup-password">
+                        <label class="field-label" for="signupPassword"
+                            >Password</label
+                        >
+                        <input
+                            type="password"
+                            id="signupPassword"
+                            class="field-input"
+                            placeholder="Create a strong password"
+                        />
+                        <p class="error-text" id="signupPasswordError"></p>
+                        <!-- Real-time password requirement checklist -->
+                        <div class="password-requirements" id="passwordRequirements">
+                            <p class="requirements-title">Your password must contain:</p>
+                            <ul class="requirements-list">
+                                <li id="req-length"><span class="req-icon">○</span> Minimum 8 characters</li>
+                                <li id="req-uppercase"><span class="req-icon">○</span> One uppercase letter</li>
+                                <li id="req-lowercase"><span class="req-icon">○</span> One lowercase letter</li>
+                                <li id="req-number"><span class="req-icon">○</span> One number</li>
+                                <li id="req-special"><span class="req-icon">○</span> One special symbol (!@#$%^&*)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="field" id="field-signup-confirm">
+                        <label class="field-label" for="signupConfirmPassword"
+                            >Confirm Password</label
+                        >
+                        <input
+                            type="password"
+                            id="signupConfirmPassword"
+                            class="field-input"
+                            placeholder="Re-enter password"
+                        />
+                        <p class="error-text" id="signupConfirmError"></p>
+                    </div>
+                </div>
+
+                <button
+                    class="btn btn-primary"
+                    id="signupSubmit"
+                    style="width: 100%; margin-top: 1.5rem"
+                >
+                    Create Account
+                </button>
+
+                <div class="form-footer-text">
+                    Already have an account?
+                    <a
+                        data-switch-from="signupModal"
+                        data-switch-to="loginModal"
+                        >Sign in</a
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- 
+             Forgot Password Modal 
+             Multi-step flow for resetting a forgotten password using OTP verification.
+        -->
+        <div class="modal" id="forgotPasswordModal" aria-hidden="true" role="dialog">
+            <div class="modal-content">
+                <span
+                    class="close-btn"
+                    data-close="forgotPasswordModal"
+                    aria-label="Close"
+                    >&times;</span
+                >
+                <h2 class="modal-title">Reset Password</h2>
+                <p class="modal-subtitle">
+                    Enter your email address to receive a password reset OTP.
+                </p>
+
+                <!-- Feedback banner for password reset status -->
+                <div
+                    class="status-banner"
+                    id="forgotPasswordStatus"
+                    aria-live="polite"
+                >
+                    <span class="status-dot" id="forgotPasswordStatusDot"></span>
+                    <span id="forgotPasswordStatusText"></span>
+                </div>
+
+                <!-- Step 1: Email Input (Initial Request) -->
+                <div id="forgotStep1" class="form-grid">
+                    <div class="field" id="field-forgot-email">
+                        <label class="field-label" for="forgotEmail"
+                            >Email Address</label
+                        >
+                        <input
+                            type="email"
+                            id="forgotEmail"
+                            class="field-input"
+                            placeholder="your@email.com"
+                        />
+                        <p class="error-text" id="forgotEmailError"></p>
+                    </div>
+                </div>
+
+                <!-- Step 2: OTP Input (Verification) -->
+                <div id="forgotStep2" class="form-grid" style="display: none;">
+                    <div class="field" id="field-forgot-otp">
+                        <label class="field-label" for="forgotOtp"
+                            >Enter OTP</label
+                        >
+                        <input
+                            type="text"
+                            id="forgotOtp"
+                            class="field-input"
+                            placeholder="6-digit code"
+                            maxlength="6"
+                        />
+                        <p class="error-text" id="forgotOtpError"></p>
+                    </div>
+                </div>
+
+                <!-- Step 3: New Password (Reset completion) -->
+                <div id="forgotStep3" class="form-grid" style="display: none;">
+                    <div class="field" id="field-forgot-new-password">
+                        <label class="field-label" for="forgotNewPassword"
+                            >New Password</label
+                        >
+                        <input
+                            type="password"
+                            id="forgotNewPassword"
+                            class="field-input"
+                            placeholder="Create a strong password"
+                        />
+                        <p class="error-text" id="forgotNewPasswordError"></p>
+                    </div>
+                    <div class="field" id="field-forgot-confirm-password">
+                        <label class="field-label" for="forgotConfirmPassword"
+                            >Confirm Password</label
+                        >
+                        <input
+                            type="password"
+                            id="forgotConfirmPassword"
+                            class="field-input"
+                            placeholder="Re-enter password"
+                        />
+                        <p class="error-text" id="forgotConfirmPasswordError"></p>
+                    </div>
+                </div>
+
+                <button
+                    class="btn btn-primary"
+                    id="forgotSubmitBtn"
+                    style="width: 100%; margin-top: 1.5rem"
+                >
+                    Send OTP
+                </button>
+
+                <div class="form-footer-text">
+                    Remember your password?
+                    <a
+                        data-switch-from="forgotPasswordModal"
+                        data-switch-to="loginModal"
+                        >Sign in</a
+                    >
+                </div>
+            </div>
+        </div>
+
+        <script>
+            /**
+             * NH Network Landing Page JavaScript
+             * 
+             * This script manages:
+             * 1. Modal open/close and switching logic.
+             * 2. Form validation and error state management.
+             * 3. Authentication (Signup/Login) API interactions.
+             * 4. Password reset flow (Forgot Password).
+             * 5. Persistent session management via LocalStorage.
+             */
+
+            // Navbar governed by navbar.js
+            const loginModal = document.getElementById("loginModal");
+            const signupModal = document.getElementById("signupModal");
+
+            /**
+             * Opens a modal by ID, sets ARIA attributes for accessibility, 
+             * and disables body scrolling.
+             */
+            function openModal(id) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.add("modal-open");
+                    el.setAttribute("aria-hidden", "false");
+                    document.body.style.overflow = "hidden";
+                }
+            }
+
+            /**
+             * Closes a modal by ID, resets ARIA attributes, 
+             * and re-enables body scrolling.
+             */
+            function closeModal(id) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.remove("modal-open");
+                    el.setAttribute("aria-hidden", "true");
+                    document.body.style.overflow = "auto";
+                }
+            }
+
+            /**
+             * Removes error styling and messages from a form field.
+             */
+            function clearFieldError(wrapperId, errorId) {
+                const wrapper = document.getElementById(wrapperId);
+                const error = document.getElementById(errorId);
+                if (wrapper) wrapper.classList.remove("field-error");
+                if (error) error.textContent = "";
+            }
+
+            /**
+             * Applies error styling and a descriptive message to a form field.
+             */
+            function setFieldError(wrapperId, errorId, message) {
+                const wrapper = document.getElementById(wrapperId);
+                const error = document.getElementById(errorId);
+                if (wrapper) wrapper.classList.add("field-error");
+                if (error) error.textContent = message;
+            }
+
+            /**
+             * Updates the status banner UI for feedback (success/error).
+             */
+            function setStatus(bannerId, textId, variant, message, dotId) {
+                const banner = document.getElementById(bannerId);
+                const text = document.getElementById(textId);
+                const dot = dotId ? document.getElementById(dotId) : null;
+                if (!banner || !text) return;
+
+                banner.classList.remove("error", "success", "visible");
+                if (!message) {
+                    text.textContent = "";
+                    if (dot) dot.className = "status-dot";
+                    return;
+                }
+
+                text.textContent = message;
+                banner.classList.add("visible");
+                if (variant === "error") {
+                    banner.classList.add("error");
+                    if (dot) dot.className = "status-dot error";
+                } else if (variant === "success") {
+                    banner.classList.add("success");
+                    if (dot) dot.className = "status-dot success";
+                }
+            }
+
+            // ==========================================
+            //   Event Listeners for Modal Interactions
+            // ==========================================
+
+            // Hero section CTA buttons
+            document.getElementById("primarySignupCta").onclick = () =>
+                openModal("signupModal");
+            document.getElementById("primaryLoginCta").onclick = () =>
+                openModal("loginModal");
+
+            // Global close button handler
+            document.querySelectorAll(".close-btn").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const id = btn.getAttribute("data-close");
+                    if (id) closeModal(id);
+                });
+            });
+
+            // Logic for switching between modals (e.g., Login -> Signup)
+            document.querySelectorAll("[data-switch-from]").forEach((link) => {
+                link.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    const fromId = link.getAttribute("data-switch-from");
+                    const toId = link.getAttribute("data-switch-to");
+                    if (fromId) closeModal(fromId);
+                    if (toId) setTimeout(() => openModal(toId), 100);
+                });
+            });
+
+            // Modal closing via backdrop click
+            window.addEventListener("click", (event) => {
+                if (event.target === loginModal) closeModal("loginModal");
+                if (event.target === signupModal) closeModal("signupModal");
+            });
+
+            // Modal closing via Escape key
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    closeModal("loginModal");
+                    closeModal("signupModal");
+                }
+            });
+
+            /**
+             * Manages persistent session data after a successful login.
+             */
+            function handleLoginSuccess(user) {
+                try {
+                    localStorage.setItem("isLoggedIn", "true");
+                    localStorage.setItem("userName", user.name || "");
+                    localStorage.setItem("userId", String(user.id));
+                } catch (e) {}
+                window.location.href = "/dashboard.html";
+            }
+
+            // ==========================================
+            //   Registration (Signup) Logic
+            // ==========================================
+
+            document
+                .getElementById("signupSubmit")
+                .addEventListener("click", async () => {
+                    const fullName = document
+                        .getElementById("signupFullName")
+                        .value.trim();
+                    const username = document
+                        .getElementById("signupUsername")
+                        .value.trim();
+                    const email = document
+                        .getElementById("signupEmail")
+                        .value.trim();
+                    const password =
+                        document.getElementById("signupPassword").value;
+                    const confirm = document.getElementById(
+                        "signupConfirmPassword",
+                    ).value;
+
+                    // Clear previous errors and reset status banner
+                    clearFieldError(
+                        "field-signup-fullname",
+                        "signupFullNameError",
+                    );
+                    clearFieldError(
+                        "field-signup-username",
+                        "signupUsernameError",
+                    );
+                    clearFieldError("field-signup-email", "signupEmailError");
+                    clearFieldError(
+                        "field-signup-password",
+                        "signupPasswordError",
+                    );
+                    clearFieldError(
+                        "field-signup-confirm",
+                        "signupConfirmError",
+                    );
+                    setStatus(
+                        "signupStatus",
+                        "signupStatusText",
+                        null,
+                        "",
+                        "signupStatusDot",
+                    );
+
+                    // Client-side validation flag
+                    let hasError = false;
+
+                    // Validate Full Name
+                    if (!fullName) {
+                        setFieldError(
+                            "field-signup-fullname",
+                            "signupFullNameError",
+                            "Please enter your full name.",
+                        );
+                        hasError = true;
+                    }
+
+                    // Validate Email format
+                    if (!email) {
+                        setFieldError(
+                            "field-signup-email",
+                            "signupEmailError",
+                            "Please enter your email address.",
+                        );
+                        hasError = true;
+                    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        setFieldError(
+                            "field-signup-email",
+                            "signupEmailError",
+                            "Please enter a valid email address.",
+                        );
+                        hasError = true;
+                    }
+
+                    // Validate Password against security requirements
+                    if (!isPasswordValid(password)) {
+                        setFieldError(
+                            "field-signup-password",
+                            "signupPasswordError",
+                            "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special symbol.",
+                        );
+                        hasError = true;
+                    }
+
+                    // Ensure passwords match
+                    if (password !== confirm) {
+                        setFieldError(
+                            "field-signup-confirm",
+                            "signupConfirmError",
+                            "Passwords do not match.",
+                        );
+                        hasError = true;
+                    }
+
+                    if (hasError) return;
+
+                    // Prevent double-submission
+                    const btn = document.getElementById("signupSubmit");
+                    btn.disabled = true;
+
+                    try {
+                        // Submit registration data to the backend API
+                        const res = await fetch("/api/signup", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                fullName,
+                                username,
+                                email,
+                                password,
+                            }),
+                        });
+
+                        const data = await res.json();
+
+                        // Handle API-level errors (e.g., user already exists)
+                        if (!res.ok || !data.success) {
+                            setStatus(
+                                "signupStatus",
+                                "signupStatusText",
+                                "error",
+                                data.error ||
+                                    "Signup failed. Please try again.",
+                                "signupStatusDot",
+                            );
+                            return;
+                        }
+
+                        // Success feedback and redirection to login
+                        setStatus(
+                            "signupStatus",
+                            "signupStatusText",
+                            "success",
+                            "✓ Account created successfully! Redirecting to login...",
+                            "signupStatusDot",
+                        );
+
+                        setTimeout(() => {
+                            closeModal("signupModal");
+                            // Reset form fields
+                            document.getElementById("signupFullName").value =
+                                "";
+                            document.getElementById("signupUsername").value =
+                                "";
+                            document.getElementById("signupEmail").value = "";
+                            document.getElementById("signupPassword").value =
+                                "";
+                            document.getElementById(
+                                "signupConfirmPassword",
+                            ).value = "";
+                            openModal("loginModal");
+                        }, 1500);
+                    } catch (err) {
+                        setStatus(
+                            "signupStatus",
+                            "signupStatusText",
+                            "error",
+                            "Server error during signup. Please try again.",
+                            "signupStatusDot",
+                        );
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+
+            // ==========================================
+            //   Authentication (Login) Logic
+            // ==========================================
+
+            document
+                .getElementById("loginSubmit")
+                .addEventListener("click", async () => {
+                    const emailOrUser = document
+                        .getElementById("loginEmailOrUser")
+                        .value.trim();
+                    const password =
+                        document.getElementById("loginPassword").value;
+
+                    // Clear previous errors and reset status banner
+                    clearFieldError(
+                        "field-login-identity",
+                        "loginIdentityError",
+                    );
+                    clearFieldError(
+                        "field-login-password",
+                        "loginPasswordError",
+                    );
+                    setStatus("loginStatus", "loginStatusText", "error", "");
+
+                    // Client-side validation flag
+                    let hasError = false;
+
+                    // Validate identity field (email or username)
+                    if (!emailOrUser) {
+                        setFieldError(
+                            "field-login-identity",
+                            "loginIdentityError",
+                            "Please enter your email or username.",
+                        );
+                        hasError = true;
+                    }
+
+                    // Validate password field
+                    if (!password) {
+                        setFieldError(
+                            "field-login-password",
+                            "loginPasswordError",
+                            "Please enter your password.",
+                        );
+                        hasError = true;
+                    }
+
+                    if (hasError) return;
+
+                    // Prevent double-submission
+                    const btn = document.getElementById("loginSubmit");
+                    btn.disabled = true;
+
+                    try {
+                        // Submit login credentials to the backend API
+                        const res = await fetch("/api/login", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                emailOrUsername: emailOrUser,
+                                password,
+                            }),
+                        });
+
+                        const data = await res.json();
+
+                        // Handle API-level errors (e.g., incorrect credentials)
+                        if (!res.ok || !data.success) {
+                            setStatus(
+                                "loginStatus",
+                                "loginStatusText",
+                                "error",
+                                data.error ||
+                                    "Login failed. Check your credentials and try again.",
+                            );
+                            return;
+                        }
+
+                        // Success feedback and redirection to dashboard
+                        setStatus("loginStatus","loginStatusText","success","✓ Login successful! Redirecting...");
+
+                        setTimeout(() => {
+                            closeModal("loginModal");
+                            // Set user profile data in session
+                            const u = data.user || {};
+                            // Ensure we don't reset login state if user was just re-enabled
+                            localStorage.setItem("isLoggedIn", "true");
+                            localStorage.setItem("userName", u.name || "");
+                            localStorage.setItem("userId", String(u.id || ""));
+                            window.location.href = "/dashboard.html";
+                        }, 1000);
+                    } catch (err) {
+                        setStatus(
+                            "loginStatus",
+                            "loginStatusText",
+                            "error",
+                            "Server error during login. Please try again.",
+                        );
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+
+            // ==========================================
+            //   Form Real-time Feedback Listeners
+            // ==========================================
+
+            // Clears login identity errors as the user types
+            document
+                .getElementById("loginEmailOrUser")
+                .addEventListener("input", () => {
+                    clearFieldError(
+                        "field-login-identity",
+                        "loginIdentityError",
+                    );
+                });
+
+            // Clears login password errors as the user types
+            document
+                .getElementById("loginPassword")
+                .addEventListener("input", () => {
+                    clearFieldError(
+                        "field-login-password",
+                        "loginPasswordError",
+                    );
+                });
+
+            // Clears signup full name errors as the user types
+            document
+                .getElementById("signupFullName")
+                .addEventListener("input", () => {
+                    clearFieldError(
+                        "field-signup-fullname",
+                        "signupFullNameError",
+                    );
+                });
+
+            // Clears signup username errors as the user types
+            document
+                .getElementById("signupUsername")
+                .addEventListener("input", () => {
+                    clearFieldError(
+                        "field-signup-username",
+                        "signupUsernameError",
+                    );
+                });
+
+            // Clears signup email errors as the user types
+            document
+                .getElementById("signupEmail")
+                .addEventListener("input", () => {
+                    clearFieldError("field-signup-email", "signupEmailError");
+                });
+
+            /**
+             * Performs a multi-criteria check on a password string.
+             * Returns an object indicating which requirements are met.
+             */
+            function validatePasswordRequirements(password) {
+                return {
+                    length: password.length >= 8,
+                    uppercase: /[A-Z]/.test(password),
+                    lowercase: /[a-z]/.test(password),
+                    number: /[0-9]/.test(password),
+                    special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+                };
+            }
+
+            /**
+             * Updates the visual checklist in the Signup modal based on password criteria.
+             */
+            function updatePasswordRequirementsUI(requirements) {
+                const lengthEl = document.getElementById("req-length");
+                const uppercaseEl = document.getElementById("req-uppercase");
+                const lowercaseEl = document.getElementById("req-lowercase");
+                const numberEl = document.getElementById("req-number");
+                const specialEl = document.getElementById("req-special");
+
+                if (lengthEl) {
+                    lengthEl.classList.toggle("valid", requirements.length);
+                    lengthEl.querySelector(".req-icon").textContent = requirements.length ? "✓" : "○";
+                }
+                if (uppercaseEl) {
+                    uppercaseEl.classList.toggle("valid", requirements.uppercase);
+                    uppercaseEl.querySelector(".req-icon").textContent = requirements.uppercase ? "✓" : "○";
+                }
+                if (lowercaseEl) {
+                    lowercaseEl.classList.toggle("valid", requirements.lowercase);
+                    lowercaseEl.querySelector(".req-icon").textContent = requirements.lowercase ? "✓" : "○";
+                }
+                if (numberEl) {
+                    numberEl.classList.toggle("valid", requirements.number);
+                    numberEl.querySelector(".req-icon").textContent = requirements.number ? "✓" : "○";
+                }
+                if (specialEl) {
+                    specialEl.classList.toggle("valid", requirements.special);
+                    specialEl.querySelector(".req-icon").textContent = requirements.special ? "✓" : "○";
+                }
+            }
+
+            /**
+             * Helper to check if all password requirements are fully met.
+             */
+            function isPasswordValid(password) {
+                const req = validatePasswordRequirements(password);
+                return req.length && req.uppercase && req.lowercase && req.number && req.special;
+            }
+
+            // Real-time password strength listener for Signup
+            document
+                .getElementById("signupPassword")
+                .addEventListener("input", (e) => {
+                    clearFieldError(
+                        "field-signup-password",
+                        "signupPasswordError",
+                    );
+                    const password = e.target.value;
+                    const requirements = validatePasswordRequirements(password);
+                    updatePasswordRequirementsUI(requirements);
+                });
+
+            // Clears signup confirm password errors as the user types
+            document
+                .getElementById("signupConfirmPassword")
+                .addEventListener("input", () => {
+                    clearFieldError(
+                        "field-signup-confirm",
+                        "signupConfirmError",
+                    );
+                });
+
+            // ==========================================
+            //   Forgot Password Flow Management
+            // ==========================================
+
+            const forgotPasswordModal = document.getElementById("forgotPasswordModal");
+            
+            // Internal state to track the multi-step reset process
+            let forgotPasswordState = {
+                step: 1,
+                email: ""
+            };
+
+            // Transition from Login modal to Forgot Password modal
+            document.getElementById("forgotPasswordLink").addEventListener("click", (e) => {
+                e.preventDefault();
+                closeModal("loginModal");
+                setTimeout(() => {
+                    resetForgotPasswordForm();
+                    openModal("forgotPasswordModal");
+                }, 100);
+            });
+
+            /**
+             * Resets the Forgot Password modal to its initial step and clears all inputs.
+             */
+            function resetForgotPasswordForm() {
+                forgotPasswordState = { step: 1, email: "" };
+                
+                // Reset step visibility
+                document.getElementById("forgotStep1").style.display = "flex";
+                document.getElementById("forgotStep2").style.display = "none";
+                document.getElementById("forgotStep3").style.display = "none";
+                
+                // Clear input values
+                document.getElementById("forgotEmail").value = "";
+                document.getElementById("forgotOtp").value = "";
+                document.getElementById("forgotNewPassword").value = "";
+                document.getElementById("forgotConfirmPassword").value = "";
+                
+                // Reset button text
+                document.getElementById("forgotSubmitBtn").textContent = "Send OTP";
+                
+                // Clear error states
+                clearFieldError("field-forgot-email", "forgotEmailError");
+                clearFieldError("field-forgot-otp", "forgotOtpError");
+                clearFieldError("field-forgot-new-password", "forgotNewPasswordError");
+                clearFieldError("field-forgot-confirm-password", "forgotConfirmPasswordError");
+                setStatus("forgotPasswordStatus", "forgotPasswordStatusText", null, "", "forgotPasswordStatusDot");
+            }
+
+            /**
+             * Main controller for the multi-step forgot password submission.
+             * Steps: 1 (Request OTP), 2 (Verify OTP), 3 (Reset Password).
+             */
+            document.getElementById("forgotSubmitBtn").addEventListener("click", async () => {
+                const btn = document.getElementById("forgotSubmitBtn");
+                
+                if (forgotPasswordState.step === 1) {
+                    // --- STEP 1: REQUEST OTP ---
+                    const email = document.getElementById("forgotEmail").value.trim();
+                    
+                    clearFieldError("field-forgot-email", "forgotEmailError");
+                    setStatus("forgotPasswordStatus", "forgotPasswordStatusText", null, "", "forgotPasswordStatusDot");
+                    
+                    if (!email) {
+                        setFieldError("field-forgot-email", "forgotEmailError", "Please enter your email address.");
+                        return;
+                    }
+                    
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                        setFieldError("field-forgot-email", "forgotEmailError", "Please enter a valid email address.");
+                        return;
+                    }
+                    
+                    btn.disabled = true;
+                    btn.textContent = "Sending...";
+                    
+                    try {
+                        // Request backend to send a one-time password (OTP)
+                        const res = await fetch("/api/forgot-password/send-otp", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ email })
+                        });
+                        
+                        const data = await res.json();
+                        
+                        if (!res.ok || !data.success) {
+                            setStatus(
+                                "forgotPasswordStatus",
+                                "forgotPasswordStatusText",
+                                "error",
+                                data.error || "Failed to send OTP. Please try again.",
+                                "forgotPasswordStatusDot"
+                            );
+                            return;
+                        }
+                        
+                        // Proceed to OTP verification step
+                        forgotPasswordState.email = email;
+                        forgotPasswordState.step = 2;
+                        
+                        document.getElementById("forgotStep1").style.display = "none";
+                        document.getElementById("forgotStep2").style.display = "flex";
+                        btn.textContent = "Verify OTP";
+                        
+                        setStatus(
+                            "forgotPasswordStatus",
+                            "forgotPasswordStatusText",
+                            "success",
+                            "An OTP has been sent to your email.",
+                            "forgotPasswordStatusDot"
+                        );
+                        
+                    } catch (err) {
+                        setStatus(
+                            "forgotPasswordStatus",
+                            "forgotPasswordStatusText",
+                            "error",
+                            "Server error. Please try again later.",
+                            "forgotPasswordStatusDot"
+                        );
+                    } finally {
+                        btn.disabled = false;
+                    }
+                    
+                } else if (forgotPasswordState.step === 2) {
+                    // --- STEP 2: VERIFY OTP ---
+                    const otp = document.getElementById("forgotOtp").value.trim();
+                    
+                    clearFieldError("field-forgot-otp", "forgotOtpError");
+                    setStatus("forgotPasswordStatus", "forgotPasswordStatusText", null, "", "forgotPasswordStatusDot");
+                    
+                    if (!otp || otp.length !== 6) {
+                        setFieldError("field-forgot-otp", "forgotOtpError", "Please enter the 6-digit OTP.");
+                        return;
+                    }
+                    
+                    btn.disabled = true;
+                    btn.textContent = "Verifying...";
+                    
+                    try {
+                        // Validate the provided OTP with the backend
+                        const res = await fetch("/api/forgot-password/verify-otp", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ email: forgotPasswordState.email, otp })
+                        });
+                        
+                        const data = await res.json();
+                        
+                        if (!res.ok || !data.success) {
+                            setStatus(
+                                "forgotPasswordStatus",
+                                "forgotPasswordStatusText",
+                                "error",
+                                data.error || "Invalid OTP. Please try again.",
+                                "forgotPasswordStatusDot"
+                            );
+                            return;
+                        }
+                        
+                        // Proceed to new password creation step
+                        forgotPasswordState.otp = otp;
+                        forgotPasswordState.step = 3;
+                        
+                        document.getElementById("forgotStep2").style.display = "none";
+                        document.getElementById("forgotStep3").style.display = "flex";
+                        btn.textContent = "Reset Password";
+                        
+                        setStatus(
+                            "forgotPasswordStatus",
+                            "forgotPasswordStatusText",
+                            "success",
+                            "OTP verified! Enter your new password.",
+                            "forgotPasswordStatusDot"
+                        );
+                        
+                    } catch (err) {
+                        setStatus(
+                            "forgotPasswordStatus",
+                            "forgotPasswordStatusText",
+                            "error",
+                            "Server error. Please try again later.",
+                            "forgotPasswordStatusDot"
+                        );
+                    } finally {
+                        btn.disabled = false;
+                    }
+                    
+                } else if (forgotPasswordState.step === 3) {
+                    // --- STEP 3: RESET PASSWORD ---
+                    const newPassword = document.getElementById("forgotNewPassword").value;
+                    const confirmPassword = document.getElementById("forgotConfirmPassword").value;
+                    
+                    clearFieldError("field-forgot-new-password", "forgotNewPasswordError");
+                    clearFieldError("field-forgot-confirm-password", "forgotConfirmPasswordError");
+                    setStatus("forgotPasswordStatus", "forgotPasswordStatusText", null, "", "forgotPasswordStatusDot");
+                    
+                    let hasError = false;
+                    
+                    // Validate new password length
+                    if (!newPassword || newPassword.length < 8) {
+                        setFieldError("field-forgot-new-password", "forgotNewPasswordError", "Password must be at least 8 characters.");
+                        hasError = true;
+                    }
+                    
+                    // Ensure passwords match
+                    if (newPassword !== confirmPassword) {
+                        setFieldError("field-forgot-confirm-password", "forgotConfirmPasswordError", "Passwords do not match.");
+                        hasError = true;
+                    }
+                    
+                    if (hasError) return;
+                    
+                    btn.disabled = true;
+                    btn.textContent = "Resetting...";
+                    
+                    try {
+                        // Submit the new password to the backend to complete the reset
+                        const res = await fetch("/api/forgot-password/reset", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                email: forgotPasswordState.email,
+                                otp: forgotPasswordState.otp,
+                                newPassword
+                            })
+                        });
+                        
+                        const data = await res.json();
+                        
+                        if (!res.ok || !data.success) {
+                            setStatus(
+                                "forgotPasswordStatus",
+                                "forgotPasswordStatusText",
+                                "error",
+                                data.error || "Failed to reset password. Please try again.",
+                                "forgotPasswordStatusDot"
+                            );
+                            return;
+                        }
+                        
+                        // Final success feedback and return to login
+                        setStatus(
+                            "forgotPasswordStatus",
+                            "forgotPasswordStatusText",
+                            "success",
+                            "✓ Your password has been updated successfully!",
+                            "forgotPasswordStatusDot"
+                        );
+                        
+                        setTimeout(() => {
+                            closeModal("forgotPasswordModal");
+                            openModal("loginModal");
+                        }, 2000);
+                        
+                    } catch (err) {
+                        setStatus(
+                            "forgotPasswordStatus",
+                            "forgotPasswordStatusText",
+                            "error",
+                            "Server error. Please try again later.",
+                            "forgotPasswordStatusDot"
+                        );
+                    } finally {
+                        btn.disabled = false;
+                    }
+                }
+            });
+
+            // ==========================================
+            //   Forgot Password Real-time Listeners
+            // ==========================================
+
+            document.getElementById("forgotEmail").addEventListener("input", () => {
+                clearFieldError("field-forgot-email", "forgotEmailError");
+            });
+
+            document.getElementById("forgotOtp").addEventListener("input", () => {
+                clearFieldError("field-forgot-otp", "forgotOtpError");
+            });
+
+            document.getElementById("forgotNewPassword").addEventListener("input", () => {
+                clearFieldError("field-forgot-new-password", "forgotNewPasswordError");
+            });
+
+            document.getElementById("forgotConfirmPassword").addEventListener("input", () => {
+                clearFieldError("field-forgot-confirm-password", "forgotConfirmPasswordError");
+            });
+
+            // Close button handler for Forgot Password modal
+            document.querySelector('[data-close="forgotPasswordModal"]').addEventListener("click", () => {
+                closeModal("forgotPasswordModal");
+            });
+
+            // Modal closing via backdrop click
+            window.addEventListener("click", (event) => {
+                if (event.target === forgotPasswordModal) closeModal("forgotPasswordModal");
+            });
+
+            // Modal closing via Escape key
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    closeModal("forgotPasswordModal");
+                }
+            });
+        </script>
+
+        <!-- 
+             Live Platform Metrics Script 
+             Fetches and updates the hero section statistics in real-time.
+        -->
+        <script>
+            /**
+             * Formats numbers with thousands separators for UI display.
+             */
+            function formatNumber(n) {
+                try {
+                    return new Intl.NumberFormat('en-US').format(Math.round(Number(n) || 0));
+                } catch (_) {
+                    return String(n || 0);
+                }
+            }
+
+            /**
+             * Formats large currency values into compact readable strings (e.g., $1.2M).
+             */
+            function formatCurrencyCompact(n) {
+                const v = Number(n) || 0;
+                const a = Math.abs(v);
+                if (a >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
+                if (a >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M';
+                if (a >= 1e3) return '$' + (v / 1e3).toFixed(2) + 'K';
+                return '$' + v.toFixed(2);
+            }
+
+            /**
+             * Formats decimals into percentage strings.
+             */
+            function formatPercent(p) {
+                const v = Number(p);
+                if (!isFinite(v)) return '0.0%';
+                return v.toFixed(1) + '%';
+            }
+
+            /**
+             * Asynchronously fetches live system metrics from the backend.
+             * Updates the corresponding HTML elements in the hero section.
+             */
+            async function refreshMetrics() {
+                try {
+                    const res = await fetch('/api/metrics/overview');
+                    const data = await res.json();
+                    if (!res.ok || !data || !data.success) return;
+                    
+                    const m = data.metrics || {};
+                    const elActive = document.getElementById('statActiveLearners');
+                    const elAssets = document.getElementById('statAssetsTracked');
+                    const elUptime = document.getElementById('statSystemUptime');
+                    const elMarket = document.getElementById('statMarketData');
+                    const elInvestors = document.getElementById('statActiveInvestors');
+                    
+                    if (elActive) elActive.textContent = formatNumber(m.approvedLearners || 0);
+                    if (elAssets) elAssets.textContent = formatCurrencyCompact(m.assetsTrackedUsd || 0);
+                    if (elUptime) elUptime.textContent = formatPercent(m.uptimePercent || 0);
+                    if (elMarket) elMarket.textContent = m.marketStatus || '—';
+                    if (elInvestors) elInvestors.textContent = formatNumber(m.activeInvestors || 0);
+                } catch (_) {
+                    // Fail silently to avoid interrupting user experience
+                }
+            }
+
+            /**
+             * Page Initialization
+             * 1. Fetches initial metrics.
+             * 2. Sets up periodic metric updates (every 15s).
+             * 3. Handles deep-linking for direct modal opening (e.g., ?login=1).
+             */
+            document.addEventListener('DOMContentLoaded', function () {
+                refreshMetrics();
+                setInterval(refreshMetrics, 15000); // Polling interval
+                
+                try {
+                    const url = new URL(window.location.href);
+                    const qp = url.searchParams;
+                    const hash = url.hash || '';
+                    
+                    // Check for URL parameters or hashes to auto-open modals
+                    if (qp.get('login') === '1' || hash === '#login') {
+                        openModal('loginModal');
+                    } else if (qp.get('signup') === '1' || hash === '#signup') {
+                        openModal('signupModal');
+                    }
+                } catch (_) {}
+            });
+        </script>
+        <!-- Footer governed by footer.js -->
+        <script src="footer.js"></script>
+</body>
+</html>

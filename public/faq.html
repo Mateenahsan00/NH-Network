@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FAQ - NH Network</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        /* 
+         * ==========================================================================
+         * GLOBAL STYLES & DESIGN TOKENS
+         * ==========================================================================
+         * Standardized layout, typography, and color palette for the NH Network platform.
+         */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", sans-serif;
+        }
+
+        /* 
+         * Design Tokens
+         * Centralized color and spacing variables for consistent UI/UX.
+         */
+        :root {
+            --bg-dark: #0f1419;           /* Deep dark background */
+            --bg-card: rgba(59, 130, 246, 0.08); /* Translucent card background */
+            --border-color: rgba(59, 130, 246, 0.15); /* Soft border for glassmorphism */
+            --text-primary: #ffffff;      /* High emphasis text */
+            --text-secondary: #cbd5e0;    /* Medium emphasis text */
+            --text-muted: #a0aec0;        /* Low emphasis text */
+            --accent-blue: #3b82f6;       /* Primary blue brand color */
+            --accent-purple: #8b5cf6;     /* Secondary purple accent */
+            --success: #22c55e;           /* Success feedback color */
+            --error: #ef4444;             /* Error feedback color */
+            --radius-lg: 16px;            /* Corner radius for panels */
+            --radius-md: 10px;            /* Corner radius for inputs/buttons */
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.3); /* Subtle depth shadow */
+            --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.5); /* Strong focus shadow */
+        }
+
+        body {
+            background: #0f1419;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 
+         * Animated Background
+         * Implements a fixed-position decorative gradient background.
+         */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.1), transparent),
+                radial-gradient(ellipse 80% 80% at 80% 80%, rgba(139, 92, 246, 0.08), transparent);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* 
+         * Navigation Header
+         * Glassmorphism effect with backdrop-filter blur and translucent background.
+         */
+        header {
+            width: 100%;
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 20, 25, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .brand:hover {
+            transform: scale(1.02);
+        }
+
+        /* Logo Branding */
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            color: #ffffff;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-text {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 14px;
+            transition: color 0.3s ease;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            color: #ffffff;
+        }
+
+        /* 
+         * Standard Button Component
+         * Reusable button styles with consistent hover transitions.
+         */
+        .btn {
+            padding: 0.85rem 2.2rem;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Button Shimmer Effect */
+        .btn-primary::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-outline {
+            background: rgba(139, 92, 246, 0.15);
+            color: #e0e7ff;
+            border: 1.5px solid rgba(139, 92, 246, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-outline:hover {
+            background: rgba(139, 92, 246, 0.25);
+            border-color: rgba(139, 92, 246, 0.6);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Main Content Layout */
+        main {
+            flex: 1;
+            padding: 4rem 5%;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* FAQ Header Section */
+        .faq-header {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #a0aec0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .faq-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.6;
+        }
+
+        /* 
+         * Search Bar Component
+         * Features a translucent background and soft borders.
+         */
+        .search-container {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1.2rem 1.5rem 1.2rem 3.5rem;
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            color: #ffffff;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            background: rgba(59, 130, 246, 0.12);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 20px;
+        }
+
+        /* 
+         * Category Filter Chips
+         * Pill-shaped buttons for quick filtering by topic.
+         */
+        .categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+        }
+
+        .category-btn {
+            padding: 0.6rem 1.2rem;
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-btn:hover, .category-btn.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: var(--accent-blue);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        /* 
+         * FAQ Accordion System
+         * Implements smooth transitions for expanding/collapsing content.
+         */
+        .faq-section {
+            margin-bottom: 3rem;
+            display: block;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .faq-item {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .faq-item:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateX(5px);
+        }
+
+        .faq-question {
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #ffffff;
+            user-select: none;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+            padding: 0 1.5rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        /* Expanded state for accordion item */
+        .faq-item.open .faq-answer {
+            max-height: 300px;
+            padding-bottom: 1.5rem;
+        }
+
+        .faq-toggle {
+            width: 24px;
+            height: 24px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+            color: var(--accent-blue);
+            font-weight: 800;
+        }
+
+        .faq-item.open .faq-toggle {
+            transform: rotate(45deg);
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        /* Support CTA Section */
+        .support-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.06) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-top: 4rem;
+            backdrop-filter: blur(20px);
+        }
+
+        .support-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .support-text {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        /* Sticky Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 5%;
+            border-top: 1px solid rgba(59, 130, 246, 0.1);
+            background: rgba(15, 20, 25, 0.5);
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: auto;
+        }
+
+        footer a {
+            color: #3b82f6;
+            text-decoration: none;
+            margin: 0 0.5rem;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: #60a5fa;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+            h1 { font-size: 32px; }
+            .faq-subtitle { font-size: 16px; }
+            .section-title { font-size: 20px; }
+            .faq-question { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+     * GLOBAL HEADER
+     * Injected dynamically via navbar.js to maintain navigation consistency across the SPA.
+     -->
+    <header id="global-header"></header>
+    <script src="navbar.js"></script>
+
+    <main>
+        <!-- FAQ HERO SECTION: Introduction and Interactive Search -->
+        <section class="faq-header">
+            <h1>Frequently Asked Questions</h1>
+            <p class="faq-subtitle">Everything you need to know about NH Network platform, learning, and investing.</p>
+            
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="faqSearch" placeholder="Search for questions (e.g. 'withdraw', 'points', 'security')..." />
+            </div>
+
+            <!-- CATEGORY FILTERS: Quick navigation between FAQ topics -->
+            <div class="categories">
+                <button class="category-btn active" data-category="all">All Questions</button>
+                <button class="category-btn" data-category="general">General</button>
+                <button class="category-btn" data-category="account">Account & Login</button>
+                <button class="category-btn" data-category="learning">Learning Dashboard</button>
+                <button class="category-btn" data-category="investment">Investment System</button>
+                <button class="category-btn" data-category="withdrawals">Profits & Withdrawals</button>
+                <button class="category-btn" data-category="security">Security</button>
+                <button class="category-btn" data-category="community">Community</button>
+            </div>
+        </section>
+
+        <div id="faqContainer">
+            <!-- General Questions Section -->
+            <section class="faq-section" data-section="general">
+                <h2 class="section-title">🌐 General Questions</h2>
+                <div class="faq-item">
+                    <div class="faq-question">What is NH Network? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">NH Network is a comprehensive web platform designed to combine structured cryptocurrency education with advanced trading tools. We help users transform from beginners into confident investors through real-time market data and professional learning paths.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Is NH Network free to join? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Yes, creating an account on NH Network is completely free. You can sign up and explore the platform immediately. Certain features like advanced investment tools or specific certificate courses may require verification or specific account types.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">How do I get started? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Simply click the "Get Started" button on the home page, create your account, and choose your path. You can start as a Learner to build your knowledge or apply to become an Investor to start managing your portfolio.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Is NH Network available on mobile? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">NH Network is fully responsive and optimized for all devices, including smartphones and tablets. You can access your learning dashboard and investment portfolio anytime, anywhere, directly from your mobile browser.</div>
+                </div>
+            </section>
+
+            <!-- Account & Login -->
+            <section class="faq-section" data-section="account">
+                <h2 class="section-title">👤 Account & Login</h2>
+                <div class="faq-item">
+                    <div class="faq-question">What are the password requirements? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">To ensure your account security, passwords must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character (e.g., @, #, $, %).</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">How can I reset my password? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">If you forget your password, click the "Forgot Password" link on the login form. Enter your registered email to receive a 6-digit OTP. Once verified, you can securely set a new password for your account.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Why haven't I received my OTP email? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Please check your spam or junk folder. OTP emails usually arrive within 1-2 minutes. If you still don't see it, ensure the email address you entered is correct and click "Resend OTP" after the timer expires.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Is my personal information secure? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Absolutely. We use industry-standard encryption and secure hashing (bcrypt) to protect your passwords and personal data. Your verification documents are stored securely and are only accessible for verification purposes.</div>
+                </div>
+            </section>
+
+            <!-- Learning Dashboard -->
+            <section class="faq-section" data-section="learning">
+                <h2 class="section-title">📚 Learning Dashboard</h2>
+                <div class="faq-item">
+                    <div class="faq-question">How do I become a learner? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Go to your dashboard and select "Become a Learner". Fill out the request form with your details and preferred course. Once submitted, our administrators will review and approve your access to the learning content.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">How do I access video courses? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Once your learner request is approved, you can access all video courses through the "Learn" tab in your learning dashboard. Each course is broken down into easy-to-watch lessons that you can follow sequentially.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">What is the structure of the beginner course? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Our beginner courses start with fundamental concepts like "What is Blockchain?" and "How Crypto Works." We then move to practical steps like setting up wallets and understanding market cycles to ensure a smooth learning curve.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">How are the courses structured? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Courses are organized into structured lessons with video content, detailed explanations, and progress tracking. You can learn at your own pace and see your completion percentage for each course in your dashboard.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">What are the points in my dashboard? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Points represent your engagement and achievements on the platform. You earn points by completing lessons, passing quizzes, and maintaining consistent learning habits. These points reflect your growing expertise in the crypto market.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Do I need prior experience to start learning? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">No prior experience is required! We offer beginner-friendly paths that cover the basics of blockchain and cryptocurrency, helping you build a solid foundation before moving on to more advanced investment strategies.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">How does learning help before investing? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Education is the best risk management tool. By understanding market mechanics, technical analysis, and project fundamentals before investing real capital, you can make more rational decisions and avoid common beginner pitfalls.</div>
+                </div>
+            </section>
+
+            <!-- Investment System -->
+            <section class="faq-section" data-section="investment">
+                <h2 class="section-title">💰 Investment System</h2>
+                <div class="faq-item">
+                    <div class="faq-question">How do I become an investor? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">To start investing, you must complete the Investor Verification form. This requires basic personal information, a government-issued ID (CNIC), and a short verification video to ensure the security of our investment community.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">What are the available investment plans? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">We offer flexible investment options where you can allocate your capital into various top-tier cryptocurrencies. Whether you are looking for long-term growth or short-term gains, our platform provides the tools to build a custom portfolio.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Where does the market data come from? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">We provide real-time market data through institutional-grade APIs (CoinGecko). This includes live prices, 24-hour price changes, and market capitalization for hundreds of cryptocurrencies to help you make informed decisions.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">What are live coin updates? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Live coin updates are real-time price feeds that refresh automatically. This ensures that the portfolio value and market prices you see are always current, allowing you to react quickly to market movements.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">How do I buy or sell coins? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Once your investor request is approved, you can use the funds in your wallet to purchase coins. The platform calculates the number of units based on live market prices. You can track your positions and sell them anytime to realize profits.</div>
+                </div>
+            </section>
+
+            <!-- Profits & Withdrawals -->
+            <section class="faq-section" data-section="withdrawals">
+                <h2 class="section-title">💸 Profits & Withdrawals</h2>
+                <div class="faq-item">
+                    <div class="faq-question">How do I track my investment profits? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Your Investor Dashboard features a real-time Profit/Loss (PnL) tracker. It automatically compares your purchase price with current market values, displaying your net gain or loss both in currency and percentage.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">How do I withdraw my funds? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Navigate to the "Wallet" tab in your dashboard and select "Withdraw". Enter the amount you wish to withdraw and your preferred payment method. Withdrawals are processed securely after you confirm with your payment password.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Is there a fee for withdrawals? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Yes, NH Network applies a standard 1% platform fee (tax) on all withdrawals. This small fee helps us maintain the infrastructure, live data feeds, and high-quality learning content for all our users.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">How long do withdrawals take? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Withdrawal requests are typically processed within 24-48 business hours. You can monitor the status of your withdrawal in the "Transaction History" section of your wallet dashboard.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Will I receive email confirmations for investments? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Yes, for security and record-keeping, NH Network sends automated email confirmations for every major transaction, including deposits, withdrawals, and successful investment purchases.</div>
+                </div>
+            </section>
+
+            <!-- Security & Safety -->
+            <section class="faq-section" data-section="security">
+                <h2 class="section-title">🛡️ Security & Safety</h2>
+                <div class="faq-item">
+                    <div class="faq-question">How are my funds protected? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">We prioritize security through multi-layer protection, including secure database encryption, individual user wallets, and a secondary payment password required for all financial transactions on the platform.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">What is the KYC process? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">Know Your Customer (KYC) is a standard verification process. We require ID documents and video verification to prevent fraud and ensure that all investors on our platform are genuine and verified individuals.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">How do I resolve account access issues? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">If you are unable to access your account, first try resetting your password using the "Forgot Password" feature. If you still have trouble, contact our support team at devolper.expert@gmail.com for further assistance.</div>
+                </div>
+            </section>
+
+            <!-- Community -->
+            <section class="faq-section" data-section="community">
+                <h2 class="section-title">🤝 Community</h2>
+                <div class="faq-item">
+                    <div class="faq-question">How can I join the community? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">NH Network has a vibrant community of learners and investors. You can join our official WhatsApp groups, Discord server, and follow our social media channels for the latest market updates and platform news.</div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">Where can I find social media updates? <span class="faq-toggle">+</span></div>
+                    <div class="faq-answer">We are active on Twitter, Instagram, and Facebook. Follow our official handles for daily market summaries, platform tutorials, and important announcements regarding new features or community events.</div>
+                </div>
+            </section>
+
+        </div>
+
+        <section class="support-section">
+            <h2 class="support-title">Still need help?</h2>
+            <p class="support-text">Can't find the answer you're looking for? Our support team is here to assist you.</p>
+            <a href="mailto:devolper.expert@gmail.com" class="btn btn-primary">Contact Support</a>
+        </section>
+    </main>
+
+    <footer>
+        <p>
+            © 2025 NH Network. All rights reserved. |
+            <a href="#">Privacy Policy</a> |
+            <a href="#">Terms of Service</a> |
+            <a href="faq.html">FAQ</a> |
+            <a href="mailto:devolper.expert@gmail.com">Contact Support</a>
+        </p>
+    </footer>
+
+    <script>
+        /**
+         * FAQ INTERACTIVITY & FILTERING LOGIC
+         * Orchestrates the accordion behavior, search functionality, and category filtering.
+         */
+
+        // ACCORDION LOGIC: Manages the expansion/collapse of FAQ items
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const item = question.parentElement;
+                const isOpen = item.classList.contains('open');
+                
+                // UX Choice: Close all other items when a new one is opened for better focus
+                document.querySelectorAll('.faq-item').forEach(otherItem => {
+                    otherItem.classList.remove('open');
+                });
+
+                // Toggle current item state
+                if (!isOpen) {
+                    item.classList.add('open');
+                }
+            });
+        });
+
+        // SEARCH ENGINE: Filters FAQ items based on keyword matching in question or answer
+        const faqSearch = document.getElementById('faqSearch');
+        faqSearch.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const faqItems = document.querySelectorAll('.faq-item');
+            
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question').textContent.toLowerCase();
+                const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+                
+                // Match term in either the question title or the answer body
+                if (question.includes(term) || answer.includes(term)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Dynamic Section Visibility: Hide entire categories if no questions match the search
+            document.querySelectorAll('.faq-section').forEach(section => {
+                const visibleItems = section.querySelectorAll('.faq-item[style="display: block;"]').length;
+                const totalItems = section.querySelectorAll('.faq-item').length;
+                const allHidden = Array.from(section.querySelectorAll('.faq-item')).every(i => i.style.display === 'none');
+                
+                if (allHidden && term !== '') {
+                    section.style.display = 'none';
+                } else {
+                    section.style.display = 'block';
+                }
+            });
+        });
+
+        // CATEGORY FILTERING: Direct navigation to specific topics
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Update UI active state
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const category = btn.dataset.category;
+                const sections = document.querySelectorAll('.faq-section');
+
+                sections.forEach(section => {
+                    // Filter logic: show 'all' or specific section match
+                    if (category === 'all' || section.dataset.section === category) {
+                        section.style.display = 'block';
+                        // Reset visibility of nested items
+                        section.querySelectorAll('.faq-item').forEach(item => item.style.display = 'block');
+                    } else {
+                        section.style.display = 'none';
+                    }
+                });
+                
+                // Reset search bar for a clean slate when switching categories
+                faqSearch.value = '';
+            });
+        });
+    </script>
+    <script src="footer.js"></script>
+</body>
+</html>

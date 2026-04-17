@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NH Network - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* 
+     * ==========================================================================
+     * GLOBAL STYLES & DESIGN TOKENS
+     * ==========================================================================
+     * Standardized layout, typography, and color palette for the NH Network platform.
+     */
+
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      font-family: "Inter", sans-serif; 
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body { 
+      background: #0f1419; /* Deep charcoal background for high contrast */
+      color: #ffffff;
+      overflow-x: hidden; 
+      display: flex; 
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* 
+     * Animated Background
+     * Implements a fixed-position decorative gradient that creates depth 
+     * without impacting scrolling performance.
+     */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.1), transparent),
+                  radial-gradient(ellipse 80% 80% at 80% 80%, rgba(139, 92, 246, 0.08), transparent);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* 
+     * Navigation Header
+     * Features a "Glassmorphism" effect with backdrop-filter blur and 
+     * translucent background. Positioned sticky to remain accessible.
+     */
+    header {
+      width: 100%; 
+      padding: 1.5rem 5%; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      background: rgba(15, 20, 25, 0.8);
+      position: sticky; 
+      top: 0; 
+      z-index: 10;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+    }
+
+    /* Brand Identity Styling */
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .brand:hover {
+      transform: scale(1.02);
+    }
+
+    /* Logo Icon with Gradient and Shimmer Animation */
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      color: #ffffff;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Shimmer effect overlay for the logo */
+    .logo-icon::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translate(-100%, -100%) rotate(45deg); }
+      100% { transform: translate(100%, 100%) rotate(45deg); }
+    }
+
+    /* Gradient Text for the Logo name */
+    .logo-text {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-link {
+      color: #cbd5e0;
+      font-weight: 600;
+      font-size: 14px;
+      transition: color 0.3s ease;
+      margin-right: 1.5rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .nav-link:hover {
+      color: #ffffff;
+    }
+
+    .buttons { 
+      display: flex; 
+      gap: 1.5rem; 
+      align-items: center;
+    }
+
+    /* 
+     * Standard Button Component
+     * Used for primary actions with consistent gradients and shadows.
+     */
+    .btn {
+      padding: 0.85rem 2rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+      text-decoration: none;
+    }
+
+    /* Button hover shimmer animation */
+    .btn::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+      );
+      transition: left 0.5s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(59, 130, 246, 0.6);
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* 
+     * Main Dashboard Layout
+     * Centered flex container for primary decision buttons.
+     */
+    .main { 
+      text-align: center; 
+      padding: 4rem 5% 3rem; 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .main h2 {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      color: #ffffff;
+      letter-spacing: -0.03em;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffffff 0%, #a0aec0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .main p { 
+      font-size: 1.1rem; 
+      color: #cbd5e0; 
+      margin-bottom: 3rem;
+      line-height: 1.8;
+    }
+
+    /* Decision Grid: Choice between Learning and Investing */
+    .choice-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* Large Interactive Card Buttons */
+    .choice-btn {
+      padding: 2.5rem;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.06) 100%);
+      color: #ffffff; 
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer; 
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex; 
+      flex-direction: column; 
+      align-items: flex-start; 
+      gap: 1rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+    }
+
+    .choice-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .choice-btn span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .choice-label { 
+      font-size: 0.95rem; 
+      color: #a0aec0;
+      font-weight: 400;
+      text-align: left;
+      line-height: 1.6;
+    }
+
+    .choice-btn .icon { 
+      font-size: 2.5rem;
+      display: inline-block;
+      transition: all 0.4s ease;
+    }
+
+    .choice-btn .title {
+      font-size: 1.25rem;
+      letter-spacing: 0.02em;
+    }
+
+    .choice-btn:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 50px rgba(59, 130, 246, 0.3);
+      border-color: rgba(59, 130, 246, 0.4);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.12) 100%);
+    }
+
+    .choice-btn:hover::before {
+      opacity: 1;
+    }
+
+    .choice-btn:hover .icon {
+      transform: scale(1.15) rotate(5deg);
+    }
+
+    .choice-btn:active {
+      transform: translateY(-2px);
+    }
+
+    /* Footer Styling */
+    footer {
+      text-align: center; 
+      padding: 2.5rem 5%; 
+      color: #a0aec0; 
+      font-size: 13px;
+      background: rgba(15, 20, 25, 0.5);
+      border-top: 1px solid rgba(59, 130, 246, 0.1);
+      margin-top: auto;
+    }
+
+    footer a {
+      color: #3b82f6;
+      text-decoration: none;
+      margin: 0 0.5rem;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    footer a:hover {
+      color: #60a5fa;
+    }
+
+    /* Entry Animations for visual hierarchy and engagement */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .main h2 {
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    .main p {
+      animation: fadeInUp 0.6s ease-out 0.1s both;
+    }
+
+    .choice-btn:nth-child(1) {
+      animation: fadeInUp 0.6s ease-out 0.2s both;
+    }
+
+    .choice-btn:nth-child(2) {
+      animation: fadeInUp 0.6s ease-out 0.3s both;
+    }
+
+    /* Responsive Adjustments */
+    @media(max-width: 900px) {
+      header { 
+        padding: 1.2rem 5%; 
+      }
+      
+      .main h2 { 
+        font-size: 2.8rem; 
+      }
+
+      .choice-container { 
+        gap: 1.5rem; 
+      }
+
+      .choice-btn { 
+        padding: 2rem;
+      }
+    }
+
+    @media(max-width: 600px) {
+      header { 
+        padding: 1rem 5%; 
+      }
+
+      .logo-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
+      }
+
+      .logo-text {
+        font-size: 12px;
+      }
+
+      .btn { 
+        padding: 0.7rem 1.5rem; 
+        font-size: 13px; 
+      }
+
+      .main { 
+        padding: 2.5rem 5% 2rem; 
+      }
+
+      .main h2 { 
+        font-size: 2rem; 
+      }
+
+      .main p { 
+        font-size: 0.95rem; 
+        margin-bottom: 2rem;
+      }
+
+      .choice-container { 
+        grid-template-columns: 1fr;
+        gap: 1rem; 
+      }
+
+      .choice-btn { 
+        padding: 1.8rem;
+        font-size: 1.1rem;
+      }
+
+      .choice-label { 
+        font-size: 0.9rem; 
+      }
+
+      .choice-btn .icon { 
+        font-size: 2rem;
+      }
+    }
+    
+    /* 
+     * Modal Components
+     * Reusable logic for admin messages and approval notifications.
+     */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; padding: 16px; backdrop-filter: blur(8px); }
+    .modal-open { display: flex; }
+    .modal-content { background: linear-gradient(135deg, rgba(20,28,35,0.95) 0%, rgba(30,40,50,0.95) 100%); border: 1px solid rgba(59,130,246,0.2); padding: 3rem; border-radius: 20px; width: 100%; max-width: 500px; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .close-btn { position: absolute; top: 1.5rem; right: 1.5rem; background: rgba(59,130,246,0.1); border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; color: #a0aec0; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
+    .close-btn:hover { background: rgba(59,130,246,0.2); color: #ffffff; }
+    .modal-title { font-size: 24px; font-weight: 800; margin-bottom: 0.75rem; color: #ffffff; display: flex; align-items: center; gap: 10px; }
+    .modal-subtitle { font-size: 14px; color: #a0aec0; margin-bottom: 1rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <!-- 
+    Global Navigation Header
+    Injected dynamically via navbar.js to maintain consistency across the SPA.
+  -->
+  <header id="global-header"></header>
+    <script src="navbar.js"></script>
+
+  <!-- 
+    Main Dashboard Content
+    This section allows users to transition into their specialized roles 
+    (Learner or Investor). The design emphasizes clarity and ease of navigation.
+  -->
+  <section class="main">
+    <h2>Welcome to your dashboard</h2>
+    <p>Choose whether you want to focus on learning or investing today.</p>
+
+    <!-- Choice Grid: High-impact buttons for role selection -->
+    <div class="choice-container">
+      <button class="choice-btn" id="learningBtn">
+        <span class="icon">📚</span>
+        <span class="title">Become a Learner</span>
+        <span class="choice-label">Structured courses, progress tracking and achievements.</span>
+      </button>
+      <button class="choice-btn" id="investmentBtn">
+        <span class="icon">💰</span>
+        <span class="title">Become an Investor</span>
+        <span class="choice-label">Wallet, portfolio, market data and profit insights.</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Sticky Footer: Provides copyright and legal context -->
+  <footer>
+    <p>© 2025 NH Network. All Rights Reserved.</p>
+  </footer>
+
+  <script>
+    /**
+     * LOGOUT WORKFLOW
+     * Clears local authentication state and redirects to the landing page.
+     */
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        try {
+          // Purge session data from client storage
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('userName');
+          localStorage.removeItem('userId');
+        } catch (e) {
+          console.error('Failed to clear session:', e);
+        }
+        
+        logoutBtn.disabled = true;
+        logoutBtn.textContent = 'Logging out...';
+        
+        // Brief delay to ensure storage operations complete before navigation
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 600);
+      });
+    }
+
+    /**
+     * LEARNING MODULE NAVIGATION
+     * Manages the transition to the learning section.
+     * Includes status checks for applications and displays admin feedback via modals.
+     */
+    const learningBtn = document.getElementById('learningBtn');
+    if (learningBtn) {
+      /**
+       * Helper: Renders a specialized modal for admin-to-user communications.
+       * @param {string} text - The message content from the admin.
+       * @param {function} onClose - Callback executed when the modal is dismissed.
+       */
+      function openLearnerMessageModal(text, onClose) {
+        let modal = document.getElementById('learnerMessageModal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'learnerMessageModal';
+          modal.className = 'modal';
+          modal.innerHTML = `
+            <div class="modal-content">
+              <button type="button" id="learnerMessageClose" class="close-btn" aria-label="Close">&times;</button>
+              <h2 class="modal-title"><span class="logo-icon">NH</span> Admin Message</h2>
+              <p class="modal-subtitle">Please read this message from the admin. Close it to continue to learning.</p>
+              <div style="padding: 1rem; border-radius: var(--radius-lg); border:1px solid rgba(59,130,246,0.25); background: rgba(59,130,246,0.08); color:#e5e7eb; white-space:pre-wrap; line-height:1.6;" id="learnerMessageText"></div>
+            </div>`;
+          document.body.appendChild(modal);
+        }
+        const textEl = document.getElementById('learnerMessageText');
+        const closeEl = document.getElementById('learnerMessageClose');
+        if (textEl) textEl.textContent = text || '';
+        modal.classList.add('modal-open');
+        
+        const handler = () => {
+          modal.classList.remove('modal-open');
+          closeEl.removeEventListener('click', handler);
+          if (typeof onClose === 'function') onClose();
+        };
+        closeEl.addEventListener('click', handler);
+      }
+
+      // Event Listener: Orchestrates the learner enrollment/access flow
+      learningBtn.addEventListener('click', async () => {
+        try {
+          learningBtn.disabled = true;
+          const userId = localStorage.getItem('userId');
+          if (!userId) { window.location.href = '/'; return; }
+          
+          // Step 1: Check current learner application status
+          const res = await fetch(`/api/learner/request/status?userId=${encodeURIComponent(userId)}`);
+          const data = await res.json();
+          const status = (data && data.status) || null;
+          
+          if (status === 'approved' || status === 'accepted') {
+            try {
+              // Step 2: Fetch any unread admin messages regarding the approval
+              const mRes = await fetch(`/api/learner/message?userId=${encodeURIComponent(userId)}`);
+              const mData = await mRes.json();
+              const message = (mData && mData.message) || null;
+              
+              if (message && message.type === 'approved' && message.text) {
+                // Display message and mark as read before redirecting
+                openLearnerMessageModal(String(message.text), async () => {
+                  try {
+                    await fetch('/api/learner/message/read', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ id: message.id, userId: Number(userId) })
+                    });
+                  } catch (_) {}
+                  window.location.href = '/learning.html';
+                });
+              } else {
+                window.location.href = '/learning.html';
+              }
+            } catch (_) {
+              window.location.href = '/learning.html';
+            }
+          } else if (status === 'pending') {
+            alert('Your request has been sent. Please wait for admin approval.');
+            learningBtn.disabled = false;
+          } else if (status === 'not_approved') {
+            try {
+              // Fetch rejection reason if available
+              const mRes = await fetch(`/api/learner/message?userId=${encodeURIComponent(userId)}`);
+              const mData = await mRes.json();
+              const message = (mData && mData.message) || null;
+              
+              if (message && message.type === 'not_approved' && message.text) {
+                openLearnerMessageModal(String(message.text), async () => {
+                  try {
+                    await fetch('/api/learner/message/read', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ id: message.id, userId: Number(userId) })
+                    });
+                  } catch (_) {}
+                  window.location.href = '/become-learner.html';
+                });
+              } else {
+                window.location.href = '/become-learner.html';
+              }
+            } catch (_) {
+              window.location.href = '/become-learner.html';
+            }
+          } else {
+            // New applicant flow
+            window.location.href = '/become-learner.html';
+          }
+        } catch (err) {
+          console.error('Learning flow error:', err);
+          window.location.href = '/become-learner.html';
+        }
+      });
+    }
+
+    /**
+     * INVESTOR MODULE NAVIGATION
+     * Similar to the learning flow, this manages the investor portal access.
+     * Features more robust feedback for status changes.
+     */
+    function showInvestorStatusPopup(status, adminMessage) {
+      const existingModal = document.querySelector('.investor-status-modal');
+      if (existingModal) existingModal.remove();
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal investor-status-modal';
+      modal.style.display = 'flex';
+      modal.style.zIndex = '10000';
+      
+      // Determine UI content based on application state
+      let title, message, icon, buttonClass;
+      if (status === 'approved') {
+        title = 'Congratulations!';
+        message = 'Your investor request has been approved.';
+        icon = '✅';
+        buttonClass = 'btn';
+      } else if (status === 'not_approved') {
+        title = 'Request Not Approved';
+        message = 'Your investor request was not approved.';
+        icon = '❌';
+        buttonClass = 'btn secondary';
+      } else if (status === 'pending') {
+        title = 'Request Pending';
+        message = 'Your investor request is under review.';
+        icon = '⏳';
+        buttonClass = 'btn secondary';
+      }
+      
+      let adminMessageHtml = '';
+      if (adminMessage && adminMessage.trim()) {
+        adminMessageHtml = `
+          <div style="background: #f3f4f6; border-left: 4px solid ${status === 'approved' ? '#22c55e' : status === 'not_approved' ? '#ef4444' : '#f59e0b'}; padding: 12px 16px; margin: 16px 0; border-radius: 6px; text-align: left;">
+            <strong style="color: #374151; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Admin Message:</strong>
+            <p style="color: #4b5563; margin: 8px 0 0 0; font-size: 0.95rem; line-height: 1.5;">${escapeHtml(adminMessage)}</p>
+          </div>
+        `;
+      }
+      
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 420px; padding: 28px;">
+          <button type="button" id="closeInvestorStatus" class="btn secondary" style="position:absolute; right:12px; top:12px; padding:6px 10px; background: transparent; border: none; font-size: 1.2rem; cursor: pointer;">✖</button>
+          <div style="text-align: center; margin-bottom: 20px;">
+            <div style="font-size: 3rem; margin-bottom: 12px;">${icon}</div>
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0;">${title}</h2>
+          </div>
+          <p style="color: #4b5563; text-align: center; margin: 0 0 16px 0; font-size: 1rem;">${message}</p>
+          ${adminMessageHtml}
+          <button class="${buttonClass}" id="investorStatusOk" style="width:100%; margin-top: 8px; padding: 12px 24px; font-size: 1rem;">
+            ${status === 'approved' ? 'Continue to Investment' : 'OK'}
+          </button>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      document.body.style.overflow = 'hidden';
+      
+      const closeModal = (redirectUrl) => {
+        modal.remove();
+        document.body.style.overflow = 'auto';
+        if (redirectUrl) window.location.href = redirectUrl;
+      };
+      
+      document.getElementById('closeInvestorStatus').addEventListener('click', () => closeModal());
+      document.getElementById('investorStatusOk').addEventListener('click', () => {
+        if (status === 'approved') {
+          closeModal('/investment.html');
+        } else {
+          closeModal();
+        }
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    }
+    
+    /**
+     * Sanitizes HTML strings to prevent XSS attacks when displaying user-generated content.
+     */
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    const investmentBtn = document.getElementById('investmentBtn');
+    if (investmentBtn) {
+      investmentBtn.addEventListener('click', async () => {
+        try {
+          const userId = localStorage.getItem('userId');
+          if (!userId) { window.location.href = '/'; return; }
+          
+          // Check investor application status
+          const res = await fetch(`/api/investor/request/status?userId=${encodeURIComponent(userId)}`);
+          const data = await res.json();
+          const status = (data && data.status) || null;
+          const adminMessage = (data && data.message) || null;
+          
+          if (status === 'approved') {
+            // Only show the approval popup once per session/user
+            const key = `invApprovedMsgShown_${userId}`;
+            const shown = localStorage.getItem(key);
+            if (!shown) {
+              localStorage.setItem(key, '1');
+              showInvestorStatusPopup('approved', adminMessage);
+            } else {
+              window.location.href = '/investment.html';
+            }
+          } else if (status === 'not_approved') {
+            showInvestorStatusPopup('not_approved', adminMessage);
+          } else if (status === 'pending') {
+            showInvestorStatusPopup('pending', adminMessage);
+          } else {
+            window.location.href = '/become-investor.html';
+          }
+        } catch (err) {
+          console.error('Investor flow error:', err);
+          window.location.href = '/become-investor.html';
+        }
+      });
+    }
+
+    /**
+     * SESSION VALIDATION
+     * Ensures the user is authenticated before allowing access to the dashboard.
+     */
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        if (!isLoggedIn) {
+          window.location.href = '/';
+        }
+      } catch (e) {
+        window.location.href = '/';
+      }
+    });
+  </script>
+  <script src="notifications.js"></script>
+    <script src="footer.js"></script>
+</body>
+</html>

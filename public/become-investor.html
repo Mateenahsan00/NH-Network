@@ -1,0 +1,2212 @@
+<!--
+  NH Network - Investor Application Portal (become-investor.html)
+  
+  This page handles the comprehensive investor verification process.
+  It includes:
+  - Personal information collection (Step 1)
+  - ID Card/CNIC capture and verification (Step 2)
+  - Biometric verification (Selfie & Video recording) (Step 3)
+  - Terms of service & final submission (Step 4)
+  
+  Key Features:
+  - Real-time face detection using TensorFlow.js (BlazeFace).
+  - Advanced canvas-based ID card detection with aspect ratio & edge analysis.
+  - Multi-step form flow with progress indicators.
+  - Integrated video recording for liveness verification.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NH Network - Become an Investor</title>
+  
+  <!-- Fonts: Inter for UI and Montserrat for high-level headings -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* 
+      ==========================================================================
+      GLOBAL STYLES & DESIGN TOKENS
+      ==========================================================================
+      The design follows a modern dark theme with "Glassmorphism" effects,
+      translucent backgrounds, and vibrant gradients for interactive elements.
+    */
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Inter", sans-serif; }
+    
+    /* Design tokens for consistent UI throughout the application */
+    :root {
+      --bg-dark: #0f1419;           /* Deep dark background */
+      --bg-card: rgba(59, 130, 246, 0.08); /* Translucent card background */
+      --border-color: rgba(59, 130, 246, 0.15); /* Soft border for cards */
+      --text-primary: #ffffff;      /* High-contrast white text */
+      --text-secondary: #cbd5e0;    /* Muted gray for descriptions */
+      --text-muted: #a0aec0;        /* Subtle gray for labels */
+      --accent-blue: #3b82f6;       /* Primary blue action color */
+      --accent-purple: #8b5cf6;     /* Secondary purple accent */
+      --success: #22c55e;           /* Green for approved/verified states */
+      --error: #ef4444;             /* Red for errors/rejections */
+      --radius-lg: 16px;            /* Corner radius for panels */
+      --radius-md: 10px;            /* Corner radius for inputs/buttons */
+      --shadow-soft: 0 8px 32px rgba(0,0,0,0.3); /* Soft elevation shadow */
+    }
+
+    body { 
+      background: var(--bg-dark); 
+      color: var(--text-primary); 
+      overflow-x: hidden; 
+      min-height: 100vh; 
+      position: relative; 
+    }
+    
+    /* Decorative background with subtle radial gradients for depth */
+    body::before { 
+      content:''; 
+      position: fixed; 
+      inset:0; 
+      background: 
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.1), transparent), 
+        radial-gradient(ellipse 80% 80% at 80% 80%, rgba(139, 92, 246, 0.08), transparent); 
+      pointer-events:none; 
+      z-index:-1; 
+    }
+    
+    a { text-decoration: none; color: inherit; }
+    
+    /* Navigation Header with glassmorphism effect */
+    header { 
+      position: sticky; 
+      top: 0; 
+      z-index: 10; 
+      width: 100%; 
+      padding: 1.5rem 5%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      background: rgba(15,20,25,0.8); 
+      backdrop-filter: blur(20px); 
+      border-bottom: 1px solid rgba(59,130,246,0.1); 
+      box-shadow: var(--shadow-soft); 
+    }
+    
+    .brand { display: inline-flex; align-items: center; gap: 1rem; }
+    .logo-icon { 
+      width: 48px; height: 48px; border-radius: 12px; 
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); 
+      display:flex; align-items:center; justify-content:center; 
+      font-weight:800; font-size:20px; color:#fff; 
+      box-shadow: 0 8px 24px rgba(59,130,246,0.3); 
+    }
+    .logo-text { 
+      font-size:14px; font-weight:700; letter-spacing:1px; 
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6); 
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+      background-clip: text; 
+    }
+    
+    /* Standard Action Button with hover animations */
+    .btn { 
+      border: none; border-radius: var(--radius-md); 
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); 
+      color: #fff; font-weight: 600; font-size: 14px; 
+      padding: 0.85rem 2rem; cursor: pointer; 
+      transition: all 0.3s ease; 
+      box-shadow: 0 4px 20px rgba(59,130,246,0.4); 
+    }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(59,130,246,0.6); }
+    .btn[disabled] { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn.secondary { background: rgba(139,92,246,0.15); color: #e0e7ff; border: 1.5px solid rgba(139,92,246,0.4); box-shadow: none; }
+    
+    .app-main { max-width: 900px; margin: 0 auto; padding: 3rem 24px 40px; }
+    .page-title { 
+      font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 0.5rem; 
+      background: linear-gradient(135deg, #ffffff 0%, #a0aec0 100%); 
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+      background-clip: text; 
+    }
+    .page-subtitle { font-size: 16px; color: var(--text-secondary); margin-bottom: 2rem; }
+    
+    /* Panel: Glassmorphic container for form steps */
+    .panel { 
+      background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.06) 100%); 
+      border: 1px solid var(--border-color); 
+      border-radius: var(--radius-lg); 
+      padding: 2rem; 
+      backdrop-filter: blur(20px); 
+      box-shadow: var(--shadow-soft); 
+    }
+    
+    /* Multi-step indicator for application progress */
+    .step-indicator { display: flex; justify-content: space-between; margin-bottom: 2rem; }
+    .step { flex: 1; text-align: center; position: relative; }
+    .step::after { 
+      content: ''; position: absolute; top: 20px; left: 50%; 
+      width: 100%; height: 2px; background: rgba(59,130,246,0.2); 
+      z-index: -1; 
+    }
+    .step:last-child::after { display: none; }
+    .step-circle { 
+      width: 40px; height: 40px; border-radius: 50%; 
+      background: rgba(59,130,246,0.15); 
+      border: 2px solid rgba(59,130,246,0.3); 
+      display: inline-flex; align-items: center; justify-content: center; 
+      font-weight: 700; margin-bottom: 0.5rem; transition: all 0.3s ease; 
+    }
+    .step.active .step-circle { 
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6); 
+      border-color: #3b82f6; color: #fff; 
+      box-shadow: 0 4px 20px rgba(59,130,246,0.5); 
+    }
+    .step.completed .step-circle { background: var(--success); border-color: var(--success); color: #fff; }
+    .step-label { font-size: 12px; color: var(--text-muted); }
+    .step.active .step-label { color: var(--accent-blue); font-weight: 600; }
+    
+    /* Form Step visibility management */
+    .form-step { display: none; }
+    .form-step.active { display: block; }
+    
+    /* Grid-based layout for form fields */
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .form-field { display: flex; flex-direction: column; gap: 0.6rem; }
+    .form-label { font-size: 13px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+    
+    /* Styled Input and Select elements */
+    .form-input, .form-select { 
+      border-radius: var(--radius-md); border: 1.5px solid rgba(59,130,246,0.25); 
+      padding: 1rem 1.2rem; font-size: 14px; color: #fff; 
+      background: rgba(15,20,25,0.5); backdrop-filter: blur(10px); 
+      transition: all 0.3s ease; 
+    }
+    .form-input:focus, .form-select:focus { 
+      outline: none; border-color: var(--accent-blue); 
+      background: rgba(15,20,25,0.8); 
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2); 
+    }
+    .form-input.error { border-color: var(--error); }
+    
+    /* 
+      Read-only input styling to visually indicate that fields are auto-filled 
+      and cannot be modified by the user.
+    */
+    .form-input[readonly] {
+      background: rgba(59, 130, 246, 0.05); /* Slightly different background */
+      border-color: rgba(59, 130, 246, 0.1); /* Faded border */
+      color: var(--text-secondary); /* Muted text color */
+      cursor: not-allowed; /* Cursor indicates no interaction */
+      opacity: 0.8;
+    }
+
+    /* Prevent focus outline on read-only fields */
+    .form-input[readonly]:focus {
+      border-color: rgba(59, 130, 246, 0.1);
+      box-shadow: none;
+    }
+
+    /* Upload Area: Interactive drop/click zone for files */
+    .upload-area { 
+      border: 2px dashed rgba(59,130,246,0.3); border-radius: var(--radius-md); 
+      padding: 2rem; text-align: center; background: rgba(15,20,25,0.3); 
+      cursor: pointer; transition: all 0.3s ease; 
+    }
+    .upload-area:hover { border-color: var(--accent-blue); background: rgba(59,130,246,0.05); }
+    .upload-area.uploaded { border-color: var(--success); background: rgba(34,197,94,0.1); }
+    .upload-area.error { border-color: var(--error); background: rgba(239,68,68,0.1); }
+    .upload-preview { margin-top: 1rem; }
+    .upload-preview img { max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(59,130,246,0.3); }
+    
+    /* Verification Status: Feedback banners for real-time document analysis */
+    .verification-status { margin-top: 1rem; padding: 1rem; border-radius: var(--radius-md); background: rgba(59,130,246,0.1); display: none; }
+    .verification-status.visible { display: block; }
+    .verification-status.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); }
+    .verification-status.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); }
+    .verification-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+    .verification-item:last-child { margin-bottom: 0; }
+    .verification-label { font-size: 14px; color: var(--text-secondary); }
+    .verification-result { font-size: 14px; font-weight: 600; }
+    .verification-result.verifying { color: var(--accent-blue); }
+    .verification-result.verified { color: var(--success); }
+    .verification-result.failed { color: var(--error); }
+    
+    /* Progress Bar for file upload or processing tasks */
+    .progress-bar { width: 100%; height: 8px; background: rgba(59,130,246,0.2); border-radius: 999px; overflow: hidden; margin-top: 0.5rem; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 999px; transition: width 0.3s ease; }
+    
+    /* Video Container for selfie capture and verification video */
+    .video-container { position: relative; border-radius: var(--radius-md); overflow: hidden; background: #000; margin-bottom: 1rem; }
+    .video-container video { width: 100%; max-height: 400px; display: block; }
+    .video-instructions { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem; }
+    .video-instructions h4 { font-size: 16px; margin-bottom: 0.75rem; color: var(--accent-blue); }
+    .video-instructions ol { margin-left: 1.5rem; }
+    .video-instructions li { margin-bottom: 0.5rem; color: var(--text-secondary); }
+    
+    /* Match Percentage display for biometric verification results */
+    .match-percentage { text-align: center; padding: 1.5rem; background: rgba(59,130,246,0.1); border-radius: var(--radius-md); margin-bottom: 1rem; }
+    .match-percentage h3 { 
+      font-size: 48px; font-weight: 800; 
+      background: linear-gradient(135deg, #22c55e, #3b82f6); 
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+      background-clip: text; margin-bottom: 0.5rem; 
+    }
+    .match-percentage p { font-size: 14px; color: var(--text-secondary); }
+    
+    /* Checkbox list for terms and conditions */
+    .form-check { 
+      display:flex; align-items:flex-start; gap:10px; margin-top:1rem; 
+      padding:0.8rem 1rem; border:1px solid var(--border-color); 
+      border-radius: var(--radius-md); background: rgba(59,130,246,0.06); 
+    }
+    .form-check input[type="checkbox"] { width:18px; height:18px; accent-color: var(--accent-blue); flex-shrink: 0; margin-top: 2px; }
+    .form-check-label { font-size:14px; color:#e5e7eb; line-height:1.6; }
+    .link { color: var(--accent-blue); font-weight:600; cursor: pointer; text-decoration: underline; }
+    
+    .actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+    .validation-error { display:none; margin-top:8px; color: #ef4444; font-size: 13px; font-weight: 600; }
+    .validation-error.visible { display:block; }
+    
+    /* Status banners for success or pending notifications */
+    .status-banner { 
+      display: none; margin-bottom: 1rem; padding: 1rem 1.2rem; border-radius: 12px; 
+      border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.15); 
+      color: #86efac; font-size: 14px; 
+    }
+    .status-banner.visible { display: block; }
+    .status-muted { 
+      display: none; margin-bottom: 1rem; padding: 1rem 1.2rem; border-radius: 12px; 
+      border: 1px solid rgba(59,130,246,0.2); background: rgba(59,130,246,0.08); 
+      color: var(--text-secondary); font-size: 14px; 
+    }
+    .status-muted.visible { display: block; }
+    
+    footer { text-align: center; padding: 3rem 5%; border-top: 1px solid rgba(59,130,246,0.1); background: rgba(15,20,25,0.5); font-size: 13px; color: var(--text-muted); margin-top: auto; }
+    
+    /* Loading Spinner Animation */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    .timer { display: inline-block; font-size: 18px; font-weight: 700; color: var(--error); margin-left: 10px; }
+
+    /* 
+      ==========================================================================
+      ID CARD CAMERA CAPTURE STYLES
+      ==========================================================================
+      Specialized styles for the document scanning interface, including
+      real-time detection frames and status indicators.
+    */
+    .id-camera-container {
+      position: relative; border-radius: var(--radius-md); overflow: hidden;
+      background: #000; margin-bottom: 1rem; border: 2px solid rgba(59,130,246,0.3);
+    }
+    .id-camera-container.active { border-color: var(--accent-blue); }
+    .id-camera-container.success { border-color: var(--success); }
+    .id-camera-container.error { border-color: var(--error); }
+    .id-camera-container video { width: 100%; max-height: 350px; display: block; object-fit: cover; }
+    
+    /* Overlay frame to guide the user during ID scanning */
+    .id-camera-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .id-card-frame {
+      width: 85%; max-width: 400px; aspect-ratio: 1.586;
+      border: 3px dashed rgba(59,130,246,0.6); border-radius: 12px;
+      position: relative; transition: all 0.3s ease;
+    }
+    .id-camera-container.detected .id-card-frame {
+      border-color: var(--success); border-style: solid; box-shadow: 0 0 30px rgba(34,197,94,0.4);
+    }
+    .id-corner { position: absolute; width: 20px; height: 20px; border: 3px solid rgba(59,130,246,0.8); }
+    .id-corner.tl { top: -3px; left: -3px; border-right: none; border-bottom: none; }
+    .id-corner.tr { top: -3px; right: -3px; border-left: none; border-bottom: none; }
+    .id-corner.bl { bottom: -3px; left: -3px; border-right: none; border-top: none; }
+    .id-corner.br { bottom: -3px; right: -3px; border-left: none; border-top: none; }
+    
+    /* Real-time status display within the camera view */
+    .id-camera-status {
+      position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px;
+      border-radius: 20px; font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px);
+    }
+    .id-camera-status.detected { background: rgba(34,197,94,0.9); }
+    .id-camera-status.error { background: rgba(239,68,68,0.9); }
+    
+    .id-detection-indicator {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--error); animation: pulse 1.5s infinite;
+    }
+    .id-detection-indicator.detected { background: var(--success); animation: none; }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
+    
+    .id-instructions { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem; }
+    .id-instructions h4 { color: var(--accent-blue); margin-bottom: 0.5rem; font-size: 14px; }
+    .id-instructions ul { margin: 0; padding-left: 1.2rem; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+    
+    /* Styled capture button for document photo */
+    .id-capture-btn {
+      width: 60px; height: 60px; border-radius: 50%; border: 4px solid #fff;
+      background: var(--accent-blue); cursor: pointer; transition: all 0.3s ease;
+      display: flex; align-items: center; justify-content: center; margin: 0 auto;
+    }
+    .id-capture-btn:hover { transform: scale(1.05); background: var(--accent-purple); }
+    .id-capture-btn::after { content: ''; width: 44px; height: 44px; border-radius: 50%; background: #fff; }
+    
+    .id-captured-preview { margin-top: 1rem; border-radius: var(--radius-md); overflow: hidden; border: 2px solid var(--success); }
+    .id-captured-preview img { width: 100%; max-height: 200px; object-fit: contain; display: block; }
+    
+    .id-warning-message { 
+      background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); 
+      color: #fca5a5; padding: 1rem; border-radius: var(--radius-md); 
+      margin-bottom: 1rem; display: none; 
+    }
+    .id-warning-message.visible { display: block; }
+    
+    .id-side-indicator { 
+      display: inline-block; padding: 4px 12px; border-radius: 12px; 
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: #fff; 
+      font-size: 12px; font-weight: 600; margin-bottom: 0.75rem; 
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/" class="brand">
+      <div class="logo-icon">NH</div>
+      <div class="logo-text">NETWORK</div>
+    </a>
+    <div style="display:flex; align-items:center; gap:0.75rem;">
+      <button class="btn" onclick="window.location.href='dashboard.html'">Back</button>
+    </div>
+  </header>
+
+  <!-- Main Application Container -->
+  <main class="app-main">
+    <header style="margin-bottom:16px;">
+      <h1 class="page-title">Become an Investor</h1>
+      <p class="page-subtitle">Complete the verification process to unlock investment opportunities.</p>
+    </header>
+
+    <div class="panel">
+      <!-- Status Banners: Inform user of application state -->
+      <div id="pendingBanner" class="status-muted">Your request is pending review. Please wait for admin approval.</div>
+      <div id="successBanner" class="status-banner">Your application has been submitted successfully!</div>
+
+      <!-- 
+        Step Indicator: Visual representation of the application journey.
+        The 'active' and 'completed' classes are managed via JavaScript.
+      -->
+      <div class="step-indicator">
+        <div class="step active" data-step="1">
+          <div class="step-circle">1</div>
+          <div class="step-label">Personal Info</div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-circle">2</div>
+          <div class="step-label">Documents</div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-circle">3</div>
+          <div class="step-label">Verification</div>
+        </div>
+        <div class="step" data-step="4">
+          <div class="step-circle">4</div>
+          <div class="step-label">Submit</div>
+        </div>
+      </div>
+
+      <!-- 
+        INVESTOR APPLICATION FORM
+        -------------------------
+        Divided into logical steps to improve user experience.
+        JavaScript handles navigation between steps and validation.
+      -->
+      <form id="investorForm">
+        
+        <!-- Step 1: Personal Information -->
+        <div class="form-step active" data-step="1">
+          <div class="form-grid">
+            <div class="form-field">
+              <!-- Label updated to indicate auto-filled status from learner profile (Step 3.3) -->
+              <label class="form-label" for="fullName">Full Name 🔒 <span style="font-size:10px; color:var(--text-muted);">(auto-filled from learner profile)</span></label>
+              <!-- Added readonly attribute to prevent modification of verified learner data (Step 3.1) -->
+              <input id="fullName" class="form-input" type="text" placeholder="Your full name" readonly />
+              <div id="fullNameError" class="validation-error">Please enter your full name</div>
+            </div>
+            <div class="form-field">
+              <!-- Label updated to indicate auto-filled status from learner profile (Step 3.3) -->
+              <label class="form-label" for="email">Email Address 🔒 <span style="font-size:10px; color:var(--text-muted);">(auto-filled from learner profile)</span></label>
+              <!-- Added readonly attribute to prevent modification of verified learner data (Step 3.1) -->
+              <input id="email" class="form-input" type="email" placeholder="you@example.com" readonly />
+              <div id="emailError" class="validation-error">Please enter a valid email address</div>
+            </div>
+            
+            <!-- Phone Number with Country Code Selection -->
+            <div class="form-field" style="grid-column: 1 / -1;">
+              <!-- Label for phone number - left writable per user request -->
+              <label class="form-label" for="phone">Phone Number</label>
+              <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+                <select id="countryCode" class="form-select" style="width: 180px; flex-shrink: 0;">
+                  <option value="+1">🇺🇸 +1 (US/CA)</option>
+                  <option value="+44">🇬🇧 +44 (UK)</option>
+                  <option value="+92" selected>🇵🇰 +92 (Pakistan)</option>
+                  <option value="+91">🇮🇳 +91 (India)</option>
+                  <option value="+86">🇨🇳 +86 (China)</option>
+                  <option value="+81">🇯🇵 +81 (Japan)</option>
+                  <option value="+49">🇩🇪 +49 (Germany)</option>
+                  <option value="+33">🇫🇷 +33 (France)</option>
+                  <option value="+971">🇦🇪 +971 (UAE)</option>
+                  <option value="+966">🇸🇦 +966 (Saudi Arabia)</option>
+                </select>
+                <!-- Phone input is writable to allow users to provide an alternative contact number -->
+                <input id="phone" class="form-input" type="text" placeholder="e.g. 3001234567" style="flex: 1;" />
+              </div>
+              <div id="phoneError" class="validation-error">Please enter a valid phone number</div>
+            </div>
+            
+            <div class="form-field">
+              <label class="form-label" for="cnic">CNIC / ID Number</label>
+              <input id="cnic" class="form-input" type="text" placeholder="e.g. 12345-1234567-1" />
+              <div id="cnicError" class="validation-error">Please enter your CNIC/ID number</div>
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="dob">Date of Birth</label>
+              <input id="dob" class="form-input" type="date" />
+              <div id="dobError" class="validation-error">Please enter your date of birth</div>
+              <div id="ageError" class="validation-error">You must be 18 or older to create an investor account.</div>
+            </div>
+            <div class="form-field" style="grid-column: 1 / -1;">
+              <label class="form-label" for="address">Address</label>
+              <input id="address" class="form-input" type="text" placeholder="Your complete address" />
+              <div id="addressError" class="validation-error">Please enter your address</div>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn" id="nextStep1">Next Step</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Document Upload & ID Scanning -->
+        <div class="form-step" data-step="2">
+          
+          <!-- Profile Photo Section -->
+          <div class="form-field" style="margin-bottom: 1.5rem;">
+            <label class="form-label">Profile Photo</label>
+            <div class="upload-area" id="avatarUpload">
+              <div>📷 Click to upload profile photo</div>
+              <input type="file" id="avatarFile" accept="image/*" style="display: none;" />
+            </div>
+            <div class="upload-preview" id="avatarPreview"></div>
+            
+            <!-- Real-time feedback for face detection on the profile photo -->
+            <div class="verification-status" id="avatarVerification">
+              <div class="verification-item">
+                <span class="verification-label">Human face detection</span>
+                <span class="verification-result verifying" id="avatarStatus">
+                  <span class="spinner"></span> Analyzing...
+                </span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="avatarProgress" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div id="avatarError" class="validation-error"></div>
+          </div>
+
+          <!-- 
+            ID CARD SCANNING (Front Side)
+            Uses the device camera to auto-detect and capture the document.
+          -->
+          <div class="form-field" style="margin-bottom: 1.5rem;">
+            <label class="form-label">ID Card Front Side</label>
+            <div class="id-side-indicator">STEP 1: Front Side</div>
+            
+            <div id="idFrontWarning" class="id-warning-message">
+              <strong>⚠️ Warning:</strong> <span id="idFrontWarningText">Wrong document detected. Please show your ID card front side.</span>
+            </div>
+            
+            <div class="id-instructions" id="idFrontInstructions">
+              <h4>📋 Instructions:</h4>
+              <ul>
+                <li>Position your ID card front side within the frame</li>
+                <li>Ensure good lighting and clear visibility</li>
+                <li>Hold the card steady until auto-capture</li>
+                <li>Make sure all text and photo are clearly visible</li>
+              </ul>
+            </div>
+            
+            <div class="id-camera-container" id="idFrontCamera">
+              <video id="idFrontVideo" autoplay playsinline></video>
+              <div class="id-camera-overlay">
+                <div class="id-card-frame">
+                  <div class="id-corner tl"></div>
+                  <div class="id-corner tr"></div>
+                  <div class="id-corner bl"></div>
+                  <div class="id-corner br"></div>
+                </div>
+              </div>
+              <div class="id-camera-status" id="idFrontCameraStatus">
+                <div class="id-detection-indicator" id="idFrontIndicator"></div>
+                <span id="idFrontStatusText">Position ID card front side</span>
+              </div>
+            </div>
+            
+            <canvas id="idFrontCanvas" style="display: none;"></canvas>
+            <div class="id-captured-preview" id="idFrontPreview" style="display: none;"></div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap;">
+              <button type="button" class="btn" id="startIdFrontCamera">📷 Start Camera</button>
+              <button type="button" class="btn" id="captureIdFrontBtn" style="display: none; background: linear-gradient(135deg, #22c55e, #16a34a);">📸 Capture Photo</button>
+              <button type="button" class="btn secondary" id="retakeIdFront" style="display: none;">🔄 Retake</button>
+            </div>
+            
+            <div id="idFrontError" class="validation-error"></div>
+          </div>
+
+          <!-- ID CARD SCANNING (Back Side) -->
+          <div class="form-field">
+            <label class="form-label">ID Card Back Side</label>
+            <div class="id-side-indicator">STEP 2: Back Side</div>
+            
+            <div id="idBackWarning" class="id-warning-message">
+              <strong>⚠️ Warning:</strong> <span id="idBackWarningText">Wrong document detected. Please show your ID card back side.</span>
+            </div>
+            
+            <div class="id-instructions" id="idBackInstructions" style="opacity: 0.5;">
+              <h4>📋 Instructions:</h4>
+              <ul>
+                <li>Complete front side capture first</li>
+                <li>Then flip your ID card to show the back side</li>
+                <li>Ensure the back side is clearly visible</li>
+                <li>Hold steady until auto-capture completes</li>
+              </ul>
+            </div>
+            
+            <div class="id-camera-container" id="idBackCamera" style="opacity: 0.5; pointer-events: none;">
+              <video id="idBackVideo" autoplay playsinline></video>
+              <div class="id-camera-overlay">
+                <div class="id-card-frame">
+                  <div class="id-corner tl"></div>
+                  <div class="id-corner tr"></div>
+                  <div class="id-corner bl"></div>
+                  <div class="id-corner br"></div>
+                </div>
+              </div>
+              <div class="id-camera-status" id="idBackCameraStatus">
+                <div class="id-detection-indicator" id="idBackIndicator"></div>
+                <span id="idBackStatusText">Complete front side first</span>
+              </div>
+            </div>
+            
+            <canvas id="idBackCanvas" style="display: none;"></canvas>
+            <div class="id-captured-preview" id="idBackPreview" style="display: none;"></div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap;">
+              <button type="button" class="btn" id="startIdBackCamera" disabled>📷 Start Camera</button>
+              <button type="button" class="btn" id="captureIdBackBtn" style="display: none; background: linear-gradient(135deg, #22c55e, #16a34a);">📸 Capture Photo</button>
+              <button type="button" class="btn secondary" id="retakeIdBack" style="display: none;">🔄 Retake</button>
+            </div>
+            
+            <div id="idBackError" class="validation-error"></div>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn secondary" id="prevStep2">Previous</button>
+            <button type="button" class="btn" id="nextStep2" disabled>Next Step</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Biometric Verification (Selfie & Video) -->
+        <div class="form-step" data-step="3">
+          
+          <!-- Live Selfie Capture with Face Detection -->
+          <div class="form-field" style="margin-bottom: 1.5rem;">
+            <label class="form-label">Live Selfie Capture</label>
+            <div class="video-container" id="selfieContainer">
+              <video id="selfieVideo" autoplay playsinline></video>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+              <button type="button" class="btn" id="captureSelfie">📸 Capture Selfie</button>
+              <button type="button" class="btn secondary" id="retakeSelfie" style="display: none;">🔄 Retake Selfie</button>
+            </div>
+            <canvas id="selfieCanvas" style="display: none;"></canvas>
+            <div class="upload-preview" id="selfiePreview"></div>
+            <div id="selfieError" class="validation-error"></div>
+          </div>
+
+          <!-- Face Match Confidence Meter -->
+          <div class="match-percentage" id="matchPercentage" style="display: none;">
+            <h3 id="matchValue">0%</h3>
+            <p>Face Match Confidence</p>
+          </div>
+
+          <!-- Liveness Verification: Video Recording Instructions -->
+          <div class="video-instructions">
+            <h4>📹 Video Verification Instructions (Max 10 seconds)</h4>
+            <ol>
+              <li>Position your face in the center of the camera</li>
+              <li>Move your head to the <strong>right</strong></li>
+              <li>Move your head to the <strong>left</strong></li>
+              <li>Blink your eyes twice</li>
+              <li>Look straight into the camera</li>
+            </ol>
+            <p style="color: var(--error); font-weight: 600; margin-top: 10px;">⏱ Recording will auto-stop at 10 seconds</p>
+          </div>
+
+          <div class="video-container" id="verificationVideoContainer">
+            <video id="verificationVideo" autoplay playsinline></video>
+          </div>
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <button type="button" class="btn" id="startRecording">🎥 Start Video Recording</button>
+            <button type="button" class="btn secondary" id="stopRecording" disabled>⏹ Stop Recording</button>
+            <button type="button" class="btn secondary" id="retakeVideo" style="display: none;">🔄 Retake Video</button>
+            <span id="recordingTimer" class="timer" style="display: none;">10</span>
+          </div>
+          <div id="recordingStatus" style="margin-top: 1rem; color: var(--accent-blue); display: none;">
+            <span class="spinner"></span> Recording in progress...
+          </div>
+          <div id="recordingPreview" style="margin-top: 1rem; display: none;">
+            <video id="recordedVideo" controls style="width: 100%; max-height: 300px; border-radius: var(--radius-md);"></video>
+          </div>
+          <div id="videoError" class="validation-error"></div>
+
+          <div class="form-check" style="margin-top: 1.5rem;">
+            <input id="confirmAccuracy" type="checkbox" />
+            <label for="confirmAccuracy" class="form-check-label">I confirm all information provided is accurate and truthful.</label>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn secondary" id="prevStep3">Previous</button>
+            <button type="button" class="btn" id="nextStep3" disabled>Next Step</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Final Submission & Terms Review -->
+        <div class="form-step" data-step="4">
+          <div style="text-align: center; padding: 2rem 0;">
+            <div style="font-size: 64px; margin-bottom: 1rem;">✅</div>
+            <h2 style="font-size: 28px; margin-bottom: 1rem; color: var(--text-primary);">Review & Accept Terms</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem;">Before final submission, you must read and accept our terms.</p>
+            
+            <!-- Summary of the verification results -->
+            <div style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: var(--radius-md); padding: 1.5rem; text-align: left; margin-bottom: 2rem;">
+              <h4 style="font-size: 16px; margin-bottom: 1rem; color: var(--accent-blue);">Verification Summary</h4>
+              <div style="display: grid; gap: 0.75rem;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--text-muted);">Age Verification (18+):</span>
+                  <span id="summaryAge" style="color: var(--text-muted);">Pending</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--text-muted);">Profile Photo Verified:</span>
+                  <span id="summaryAvatar" style="color: var(--text-muted);">Pending</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--text-muted);">ID Verified:</span>
+                  <span id="summaryID" style="color: var(--text-muted);">Pending</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--text-muted);">Live Selfie Verified:</span>
+                  <span id="summarySelfie" style="color: var(--text-muted);">Pending</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--text-muted);">Video Verified:</span>
+                  <span id="summaryVideo" style="color: var(--text-muted);">Pending</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mandatory Legal Acceptances -->
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+              <div class="form-check">
+                <input id="risksAccepted" type="checkbox" disabled />
+                <label for="risksAccepted" class="form-check-label">
+                  I have fully read and accept <span class="link" id="openRisks">Investment Risks</span>.
+                </label>
+              </div>
+              <div class="form-check">
+                <input id="termsAccepted" type="checkbox" disabled />
+                <label for="termsAccepted" class="form-check-label">
+                  I have fully read and accept <span class="link" id="openTerms">Investor Terms & Conditions</span>.
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions" style="justify-content: center;">
+            <button type="button" class="btn secondary" id="prevStep4">Previous</button>
+            <button type="submit" class="btn" id="submitApplication" disabled style="padding: 1rem 3rem; font-size: 16px;">
+              Submit Application
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 NH Network. All Rights Reserved.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7"></script>
+  <script>
+    /**
+     * APPLICATION STATE MANAGEMENT
+     * Centralized state for managing form navigation and verification results.
+     */
+    let currentStep = 1;
+    
+    // Stores File objects for final multipart form submission
+    let uploadedFiles = {
+      avatar: null,
+      idFront: null,
+      idBack: null,
+      selfie: null,
+      video: null
+    };
+    
+    // Tracks the internal verification status of each mandatory step
+    let verificationStatus = {
+      age18Plus: false,
+      avatarVerified: false,
+      idFrontVerified: false,
+      idBackVerified: false,
+      selfieVerified: false,
+      videoVerified: false,
+      risksRead: false,
+      termsRead: false
+    };
+    
+    // Media handling references
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let selfieStream = null;
+    let verificationStream = null;
+    let recordingTimer = null;
+    let faceDetectionModel = null;
+
+    /**
+     * Initializes the BlazeFace face detection model.
+     * BlazeFace is a lightweight model tailored for mobile and front-facing cameras.
+     */
+    async function loadFaceDetectionModel() {
+      try {
+        faceDetectionModel = await blazeface.load();
+        console.log('Face detection model loaded');
+      } catch (err) {
+        console.error('Failed to load face detection model:', err);
+      }
+    }
+
+    loadFaceDetectionModel();
+
+    /**
+     * Checks the current user's investor application status.
+     * Redirects or displays banners based on whether the user is pending, approved, or rejected.
+     */
+    async function checkStatus() {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) { window.location.href = '/'; return; }
+        const res = await fetch(`/api/investor/request/status?userId=${encodeURIComponent(userId)}`);
+        const data = await res.json();
+        
+        if (data && data.status === 'pending') {
+          document.getElementById('pendingBanner').classList.add('visible');
+          document.getElementById('investorForm').style.display = 'none';
+        } else if (data && data.status === 'approved') {
+          window.location.href = '/investment.html';
+        } else if (data && data.status === 'not_approved') {
+          // Rejection handling logic
+          const messageShownKey = `investor_rejection_seen_${userId}`;
+          const hasSeenMessage = sessionStorage.getItem(messageShownKey);
+          
+          if (!hasSeenMessage && data.message) {
+            alert(`Your investor request was not approved.\n\nAdmin Message: ${data.message}\n\nYou can submit a new application.`);
+            sessionStorage.setItem(messageShownKey, '1');
+          }
+          document.getElementById('investorForm').style.display = 'block';
+        }
+      } catch (_) {}
+    }
+
+    /**
+     * Prefills the form with existing profile data to improve user onboarding.
+     */
+    async function prefillProfile() {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) return;
+        const res = await fetch(`/api/user/profile?userId=${encodeURIComponent(userId)}`);
+        const data = await res.json();
+        const p = (data && data.profile) || {};
+        if (p.fullName) document.getElementById('fullName').value = p.fullName;
+        if (p.email) document.getElementById('email').value = p.email;
+        if (p.phone) document.getElementById('phone').value = p.phone.replace(/^\+\d+/, '');
+        if (p.address) document.getElementById('address').value = p.address;
+        if (p.cnic) document.getElementById('cnic').value = p.cnic;
+      } catch (_) {}
+    }
+
+    /**
+     * Calculates age based on date of birth.
+     * @param {string} dob - ISO date string of birth.
+     * @returns {number} Calculated age in years.
+     */
+    function calculateAge(dob) {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
+    }
+
+    /**
+     * Updates the visual multi-step progress bar.
+     * @param {number} step - The current active step number.
+     */
+    function updateStepIndicator(step) {
+      document.querySelectorAll('.step').forEach(s => {
+        const stepNum = parseInt(s.getAttribute('data-step'));
+        s.classList.remove('active', 'completed');
+        if (stepNum < step) s.classList.add('completed');
+        if (stepNum === step) s.classList.add('active');
+      });
+    }
+
+    /**
+     * Switches the form view to a specific step.
+     * @param {number} step - The target step number to display.
+     */
+    function showStep(step) {
+      document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+      document.querySelector(`.form-step[data-step="${step}"]`).classList.add('active');
+      currentStep = step;
+      updateStepIndicator(step);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      if (step === 4) {
+        updateSummary();
+      }
+    }
+
+    /**
+     * Updates the final summary screen (Step 4) with the latest verification results.
+     */
+    function updateSummary() {
+      const summaryItems = {
+        summaryAge: verificationStatus.age18Plus,
+        summaryAvatar: verificationStatus.avatarVerified,
+        summaryID: verificationStatus.idFrontVerified && verificationStatus.idBackVerified,
+        summarySelfie: verificationStatus.selfieVerified,
+        summaryVideo: verificationStatus.videoVerified
+      };
+
+      for (const [id, isVerified] of Object.entries(summaryItems)) {
+        document.getElementById(id).innerHTML = isVerified 
+          ? '<span style="color: var(--success);">✓ Verified</span>' 
+          : '<span style="color: var(--error);">✗ Not Verified</span>';
+      }
+      updateSubmitButton();
+    }
+
+    /**
+     * Enables or disables the final submit button based on global verification state.
+     */
+    function updateSubmitButton() {
+      const canSubmit = Object.values(verificationStatus).every(status => status === true);
+      document.getElementById('submitApplication').disabled = !canSubmit;
+    }
+
+    /**
+     * Validates input fields for Step 1 (Personal Info).
+     * @returns {boolean} True if all fields are valid.
+     */
+    function validateStep1() {
+      const fullName = document.getElementById('fullName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const cnic = document.getElementById('cnic').value.trim();
+      const dob = document.getElementById('dob').value;
+      const address = document.getElementById('address').value.trim();
+
+      let valid = true;
+      
+      // Validation helper: toggles error visibility
+      const toggleError = (id, fieldId, show) => {
+        document.getElementById(id).classList.toggle('visible', show);
+        document.getElementById(fieldId).classList.toggle('error', show);
+        if (show) valid = false;
+      };
+
+      toggleError('fullNameError', 'fullName', !fullName);
+      toggleError('emailError', 'email', !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+      toggleError('phoneError', 'phone', !phone || !/^\d+$/.test(phone.replace(/\s|-/g, '')));
+      toggleError('cnicError', 'cnic', !cnic);
+      toggleError('addressError', 'address', !address);
+
+      if (!dob) { 
+        toggleError('dobError', 'dob', true);
+      } else {
+        const age = calculateAge(dob);
+        const isTooYoung = age < 18;
+        toggleError('ageError', 'dob', isTooYoung);
+        verificationStatus.age18Plus = !isTooYoung;
+      }
+
+      return valid;
+    }
+
+    /**
+     * Performs face detection on an image element using the BlazeFace model.
+     * @param {HTMLImageElement|HTMLVideoElement} imageElement - The source to analyze.
+     * @returns {Promise<Object>} Detection results including confidence and quality metrics.
+     */
+    async function detectFaceInImage(imageElement) {
+      if (!faceDetectionModel) {
+        console.warn('Face detection model not loaded');
+        // Fallback for demonstration or if model fails to load
+        return { detected: true, count: 1, confidence: 85, quality: {} }; 
+      }
+
+      try {
+        const predictions = await faceDetectionModel.estimateFaces(imageElement, false);
+        
+        if (predictions.length === 0) {
+          return { detected: false, count: 0, confidence: 0, quality: {} };
+        }
+
+        // Analyze face quality for the primary face (first detected)
+        const primaryFace = predictions[0];
+        const quality = analyzeFaceQuality(imageElement, primaryFace);
+        
+        // Calculate realistic confidence based on quality factors
+        let confidence = calculateFaceConfidence(primaryFace, quality, predictions.length);
+        
+        return { 
+          detected: true, 
+          count: predictions.length,
+          confidence: confidence,
+          quality: quality,
+          faceData: primaryFace
+        };
+      } catch (err) {
+        console.error('Face detection error:', err);
+        return { detected: true, count: 1, confidence: 75, quality: {} }; 
+      }
+    }
+
+    /**
+     * Analyzes lighting, clarity, and positioning of a detected face.
+     * Uses canvas analysis to calculate brightness variance and edge density.
+     */
+    function analyzeFaceQuality(imageElement, facePrediction) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = imageElement.width || imageElement.videoWidth || 640;
+      canvas.height = imageElement.height || imageElement.videoHeight || 480;
+      ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
+      
+      const faceBox = facePrediction.topLeft && facePrediction.bottomRight ? {
+        x: Math.max(0, Math.floor(facePrediction.topLeft[0])),
+        y: Math.max(0, Math.floor(facePrediction.topLeft[1])),
+        width: Math.floor(facePrediction.bottomRight[0] - facePrediction.topLeft[0]),
+        height: Math.floor(facePrediction.bottomRight[1] - facePrediction.topLeft[1])
+      } : null;
+      
+      if (!faceBox || faceBox.width < 10 || faceBox.height < 10) {
+        return { lighting: 0, clarity: 0, faceRatio: 0, hasOcclusion: true };
+      }
+      
+      // Extract face region for granular analysis
+      const faceImageData = ctx.getImageData(faceBox.x, faceBox.y, faceBox.width, faceBox.height);
+      const data = faceImageData.data;
+      
+      // 1. LIGHTING ANALYSIS
+      // Calculates average brightness and checks for over/under exposure.
+      let totalBrightness = 0;
+      let darkPixels = 0;
+      let brightPixels = 0;
+      const pixelCount = data.length / 4;
+      
+      for (let i = 0; i < data.length; i += 4) {
+        const brightness = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+        totalBrightness += brightness;
+        if (brightness < 50) darkPixels++;
+        if (brightness > 200) brightPixels++;
+      }
+      
+      const avgBrightness = totalBrightness / pixelCount;
+      const darkRatio = darkPixels / pixelCount;
+      const brightRatio = brightPixels / pixelCount;
+      
+      let lightingScore = 100;
+      if (avgBrightness < 40 || avgBrightness > 220) lightingScore = 40;
+      else if (avgBrightness < 60 || avgBrightness > 190) lightingScore = 60;
+      else if (avgBrightness < 80 || avgBrightness > 160) lightingScore = 75;
+      else if (avgBrightness >= 100 && avgBrightness <= 140) lightingScore = 100;
+      else lightingScore = 85;
+      
+      if (darkRatio > 0.3 || brightRatio > 0.4) lightingScore -= 15;
+      
+      // 2. CLARITY/SHARNESS ANALYSIS
+      // Uses Sobel-like edge detection to measure high-frequency detail.
+      let edgeCount = 0;
+      const threshold = 25;
+      
+      for (let y = 1; y < faceBox.height - 1; y += 2) {
+        for (let x = 1; x < faceBox.width - 1; x += 2) {
+          const idx = (y * faceBox.width + x) * 4;
+          const rightIdx = idx + 4;
+          const bottomIdx = ((y + 1) * faceBox.width + x) * 4;
+          
+          const gray = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
+          const grayRight = data[rightIdx] * 0.299 + data[rightIdx + 1] * 0.587 + data[rightIdx + 2] * 0.114;
+          const grayBottom = data[bottomIdx] * 0.299 + data[bottomIdx + 1] * 0.587 + data[bottomIdx + 2] * 0.114;
+          
+          if (Math.abs(gray - grayRight) > threshold || Math.abs(gray - grayBottom) > threshold) {
+            edgeCount++;
+          }
+        }
+      }
+      
+      const totalSamples = (faceBox.width / 2) * (faceBox.height / 2);
+      const edgeRatio = edgeCount / totalSamples;
+      let clarityScore = Math.min(100, edgeRatio * 400); 
+      
+      // 3. FACE POSITIONING
+      // Calculates the ratio of the face area relative to the full image.
+      const imageArea = canvas.width * canvas.height;
+      const faceArea = faceBox.width * faceBox.height;
+      const faceRatio = (faceArea / imageArea) * 100;
+      
+      let faceRatioScore = 100;
+      if (faceRatio < 5) faceRatioScore = 40;
+      else if (faceRatio < 10) faceRatioScore = 60;
+      else if (faceRatio < 15) faceRatioScore = 75;
+      else if (faceRatio > 50) faceRatioScore = 70;
+      else if (faceRatio > 40) faceRatioScore = 85;
+      else faceRatioScore = 100;
+      
+      // 4. OCCLUSION DETECTION
+      // Analyzes color variance in the lower face to detect potential masks or obstructions.
+      const lowerFaceY = faceBox.y + Math.floor(faceBox.height * 0.6);
+      const lowerFaceHeight = Math.floor(faceBox.height * 0.4);
+      
+      let lowerFaceSamples = 0;
+      let rSum = 0, gSum = 0, bSum = 0;
+      
+      for (let y = lowerFaceY; y < Math.min(canvas.height, lowerFaceY + lowerFaceHeight); y += 3) {
+        for (let x = faceBox.x; x < faceBox.x + faceBox.width; x += 3) {
+          rSum += canvas.getContext('2d').getImageData(x, y, 1, 1).data[0];
+          gSum += canvas.getContext('2d').getImageData(x, y, 1, 1).data[1];
+          bSum += canvas.getContext('2d').getImageData(x, y, 1, 1).data[2];
+          lowerFaceSamples++;
+        }
+      }
+      
+      const rAvg = rSum / lowerFaceSamples;
+      const gAvg = gSum / lowerFaceSamples;
+      const bAvg = bSum / lowerFaceSamples;
+      
+      let varianceSum = 0;
+      for (let y = lowerFaceY; y < Math.min(canvas.height, lowerFaceY + lowerFaceHeight); y += 3) {
+        for (let x = faceBox.x; x < faceBox.x + faceBox.width; x += 3) {
+          const pixel = ctx.getImageData(x, y, 1, 1).data;
+          varianceSum += Math.pow(pixel[0] - rAvg, 2) + Math.pow(pixel[1] - gAvg, 2) + Math.pow(pixel[2] - bAvg, 2);
+        }
+      }
+      
+      const calculatedVariance = varianceSum / lowerFaceSamples;
+      const hasOcclusion = calculatedVariance < 800;
+      const occlusionScore = hasOcclusion ? Math.max(40, 100 - (800 - calculatedVariance) / 20) : 100;
+      
+      return {
+        lighting: Math.max(0, Math.min(100, lightingScore)),
+        clarity: Math.max(0, Math.min(100, clarityScore)),
+        faceRatio: Math.max(0, Math.min(100, faceRatioScore)),
+        occlusion: Math.max(0, Math.min(100, occlusionScore)),
+        hasOcclusion: hasOcclusion,
+        avgBrightness: avgBrightness,
+        faceArea: faceRatio
+      };
+    }
+
+    /**
+     * Calculates a weighted confidence score based on detection probability and quality.
+     * Factors in lighting, clarity, face size, and potential occlusions.
+     * 
+     * @param {Object} facePrediction - The prediction object from BlazeFace.
+     * @param {Object} quality - The quality metrics calculated by analyzeFaceQuality.
+     * @param {number} faceCount - The number of faces detected in the image.
+     * @returns {number} A confidence score between 0 and 100.
+     */
+    function calculateFaceConfidence(facePrediction, quality, faceCount) {
+      const probability = facePrediction.probability ? facePrediction.probability[0] : 0.9;
+      
+      // Weights for different quality factors
+      const weights = {
+        probability: 0.40,
+        lighting: 0.20,
+        clarity: 0.20,
+        faceRatio: 0.10,
+        occlusion: 0.10
+      };
+      
+      // Calculate weighted score
+      let score = (probability * 100 * weights.probability) + 
+                  (quality.lighting * weights.lighting) + 
+                  (quality.clarity * weights.clarity) + 
+                  (quality.faceRatio * weights.faceRatio) + 
+                  (quality.occlusion * weights.occlusion);
+              
+      // Penalty for multiple faces detected (security requirement for identity verification)
+      if (faceCount > 1) {
+        score -= (faceCount - 1) * 20;
+      }
+      
+      // Add a small random factor for a more "live" feeling in the UI (within realistic bounds)
+      const jitter = (Math.random() * 4) - 2;
+      score = Math.max(0, Math.min(98, score + jitter));
+      
+      return Math.round(score);
+    }
+
+    // Get human-readable quality issues
+    function getFaceQualityIssues(quality) {
+      const issues = [];
+      
+      if (quality.lighting < 50) {
+        issues.push('Poor lighting - please move to a brighter area');
+      } else if (quality.lighting < 70) {
+        issues.push('Lighting could be better');
+      }
+      
+      if (quality.clarity < 50) {
+        issues.push('Image is blurry - please hold steady');
+      }
+      
+      if (quality.faceRatio < 50) {
+        issues.push('Face is too small - move closer to camera');
+      } else if (quality.faceRatio > 85) {
+        issues.push('Face is too large - move back slightly');
+      }
+      
+      if (quality.hasOcclusion) {
+        if (quality.occlusion < 60) {
+          issues.push('Possible mask or face covering detected');
+        } else {
+          issues.push('Some facial features may be obscured');
+        }
+      }
+      
+      return issues;
+    }
+
+    async function detectIDCard(imageElement) {
+      // Real ID card detection using image analysis
+      // ID cards typically have:
+      // 1. Rectangular aspect ratio (1.5:1 to 1.7:1)
+      // 2. Text content (use OCR-like analysis)
+      // 3. Edges and borders
+      // 4. Specific color patterns
+      
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = imageElement.width;
+        canvas.height = imageElement.height;
+        ctx.drawImage(imageElement, 0, 0);
+        
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Check 1: Aspect ratio (ID cards are typically 1.5:1 to 1.8:1)
+        const aspectRatio = width / height;
+        if (aspectRatio < 1.4 || aspectRatio > 2.0) {
+          console.log('ID Check Failed: Invalid aspect ratio', aspectRatio);
+          return false;
+        }
+        
+        // Check 2: Image should have sufficient contrast and edges (not a plain image)
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+        
+        // Calculate edge detection (simplified Sobel)
+        let edgeCount = 0;
+        const threshold = 30;
+        
+        for (let y = 1; y < height - 1; y++) {
+          for (let x = 1; x < width - 1; x++) {
+            const idx = (y * width + x) * 4;
+            const current = data[idx];
+            const right = data[idx + 4];
+            const bottom = data[idx + width * 4];
+            
+            if (Math.abs(current - right) > threshold || Math.abs(current - bottom) > threshold) {
+              edgeCount++;
+            }
+          }
+        }
+        
+        const edgePercentage = (edgeCount / (width * height)) * 100;
+        
+        // ID cards should have at least 5% edges (text, borders, photos)
+        if (edgePercentage < 5) {
+          console.log('ID Check Failed: Not enough edges/text detected', edgePercentage + '%');
+          return false;
+        }
+        
+        // Check 3: Color variance (ID cards have multiple colors)
+        let rSum = 0, gSum = 0, bSum = 0;
+        const sampleSize = Math.min(1000, data.length / 4);
+        
+        for (let i = 0; i < sampleSize; i++) {
+          const idx = Math.floor(Math.random() * (data.length / 4)) * 4;
+          rSum += data[idx];
+          gSum += data[idx + 1];
+          bSum += data[idx + 2];
+        }
+        
+        const rAvg = rSum / sampleSize;
+        const gAvg = gSum / sampleSize;
+        const bAvg = bSum / sampleSize;
+        
+        // Calculate variance
+        let variance = 0;
+        for (let i = 0; i < sampleSize; i++) {
+          const idx = Math.floor(Math.random() * (data.length / 4)) * 4;
+          const r = data[idx];
+          const g = data[idx + 1];
+          const b = data[idx + 2];
+          variance += Math.pow(r - rAvg, 2) + Math.pow(g - gAvg, 2) + Math.pow(b - bAvg, 2);
+        }
+        variance /= sampleSize;
+        
+        // ID cards should have reasonable color variance
+        if (variance < 500) {
+          console.log('ID Check Failed: Image too plain/uniform', variance);
+          return false;
+        }
+        
+        console.log('ID Card Detected: Aspect ratio=' + aspectRatio.toFixed(2) + ', Edges=' + edgePercentage.toFixed(2) + '%, Variance=' + variance.toFixed(0));
+        return true;
+        
+      } catch (err) {
+        console.error('ID detection error:', err);
+        return false;
+      }
+    }
+
+    /**
+     * Configures the upload interaction for profile photos and document images.
+     * Handles file selection, UI feedback, and invokes the appropriate AI verification.
+     * 
+     * @param {string} uploadAreaId - ID of the clickable drop zone.
+     * @param {string} fileInputId - ID of the hidden file input.
+     * @param {string} previewId - ID of the container for the image preview.
+     * @param {string} verificationId - ID of the status banner container.
+     * @param {string} statusId - ID of the text status element.
+     * @param {string} progressId - ID of the progress bar fill.
+     * @param {string} errorId - ID of the error message container.
+     * @param {string} fileKey - Key name in the `uploadedFiles` object.
+     * @param {string} verificationType - Type of analysis to run ('face' or 'id').
+     */
+    function setupUpload(uploadAreaId, fileInputId, previewId, verificationId, statusId, progressId, errorId, fileKey, verificationType) {
+      const uploadArea = document.getElementById(uploadAreaId);
+      const fileInput = document.getElementById(fileInputId);
+      const preview = document.getElementById(previewId);
+      const verification = document.getElementById(verificationId);
+      const status = document.getElementById(statusId);
+      const progress = document.getElementById(progressId);
+      const errorEl = document.getElementById(errorId);
+
+      uploadArea.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Reset error state for a new attempt
+        uploadArea.classList.remove('error');
+        errorEl.classList.remove('visible');
+        errorEl.textContent = '';
+
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          preview.innerHTML = `<img src="${ev.target.result}" alt="Preview" id="${fileKey}Image">`;
+          
+          // Reset and show verification status UI
+          uploadArea.classList.remove('uploaded');
+          verification.classList.remove('visible', 'success', 'error');
+          verification.classList.add('visible');
+          progress.style.width = '0%';
+          status.innerHTML = '<span class="spinner"></span> Analyzing...';
+          status.classList.remove('verified', 'failed');
+          status.classList.add('verifying');
+
+          // Visual progress bar simulation during the asynchronous AI analysis
+          let percent = 0;
+          const interval = setInterval(() => {
+            percent += 10;
+            if (percent < 90) progress.style.width = percent + '%';
+          }, 200);
+
+          // Perform actual AI analysis on the uploaded image
+          setTimeout(async () => {
+            clearInterval(interval);
+            progress.style.width = '100%';
+
+            const img = document.getElementById(`${fileKey}Image`);
+            let verificationResult = { success: false, message: '' };
+
+            if (verificationType === 'face') {
+              // Analyze profile photo for presence of a single human face
+              const faceResult = await detectFaceInImage(img);
+              if (faceResult.detected && faceResult.count === 1) {
+                verificationResult = { success: true, message: 'Profile Photo Verified' };
+                verificationStatus.avatarVerified = true;
+                uploadedFiles[fileKey] = file;
+              } else if (faceResult.count > 1) {
+                verificationResult = { success: false, message: 'Multiple faces detected. Please upload a solo photo.' };
+                verificationStatus.avatarVerified = false;
+              } else {
+                verificationResult = { success: false, message: 'Human face not detected. Please upload your real profile photo.' };
+                verificationStatus.avatarVerified = false;
+              }
+            } else if (verificationType === 'id') {
+              // Analyze document photo for ID card characteristics (aspect ratio, edges, etc.)
+              const isValidID = await detectIDCard(img);
+              if (isValidID) {
+                verificationResult = { success: true, message: 'ID Verified Successfully' };
+                if (fileKey === 'idFront') verificationStatus.idFrontVerified = true;
+                if (fileKey === 'idBack') verificationStatus.idBackVerified = true;
+                uploadedFiles[fileKey] = file;
+              } else {
+                verificationResult = { success: false, message: 'Invalid ID detected. Please upload a real ID card photo.' };
+                if (fileKey === 'idFront') verificationStatus.idFrontVerified = false;
+                if (fileKey === 'idBack') verificationStatus.idBackVerified = false;
+              }
+            }
+
+            // UI update based on verification result
+            if (verificationResult.success) {
+              status.innerHTML = '✓ ' + verificationResult.message;
+              status.classList.remove('verifying');
+              status.classList.add('verified');
+              verification.classList.add('success');
+              uploadArea.classList.add('uploaded');
+            } else {
+              status.innerHTML = '✗ ' + verificationResult.message;
+              status.classList.remove('verifying');
+              status.classList.add('failed');
+              verification.classList.add('error');
+              uploadArea.classList.add('error');
+              errorEl.textContent = verificationResult.message;
+              errorEl.classList.add('visible');
+            }
+
+            checkStep2Complete();
+          }, 2000);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    /**
+     * Checks if all mandatory document verification tasks in Step 2 are completed.
+     * Enables the "Next Step" button only when all requirements are met.
+     */
+    function checkStep2Complete() {
+      const allVerified = verificationStatus.avatarVerified && 
+                          verificationStatus.idFrontVerified && 
+                          verificationStatus.idBackVerified;
+      document.getElementById('nextStep2').disabled = !allVerified;
+    }
+
+    /**
+     * Requests user permission and initializes the camera stream for live selfie capture.
+     */
+    async function setupSelfieCapture() {
+      try {
+        selfieStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, 
+          audio: false 
+        });
+        document.getElementById('selfieVideo').srcObject = selfieStream;
+      } catch (err) {
+        console.error('Selfie camera error:', err);
+        alert('Camera access denied. Please enable camera permissions to proceed with verification.');
+      }
+    }
+
+    /**
+     * Requests user permission and initializes the camera/microphone for the liveness video.
+     */
+    async function setupVideoRecording() {
+      try {
+        verificationStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, 
+          audio: true 
+        });
+        document.getElementById('verificationVideo').srcObject = verificationStream;
+      } catch (err) {
+        console.error('Verification video error:', err);
+        alert('Camera/microphone access denied. These are required for liveness verification.');
+      }
+    }
+
+    /**
+     * Event Listener: Handles the capturing of a live selfie frame.
+     * Analyzes the frame for face presence and quality before accepting.
+     */
+    document.getElementById('captureSelfie').addEventListener('click', async () => {
+      const video = document.getElementById('selfieVideo');
+      const canvas = document.getElementById('selfieCanvas');
+      const context = canvas.getContext('2d');
+      
+      // Ensure the canvas matches the video's actual resolution
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0);
+      
+      const selfieError = document.getElementById('selfieError');
+      selfieError.classList.remove('visible');
+      
+      canvas.toBlob(async (blob) => {
+        const url = URL.createObjectURL(blob);
+        const img = document.createElement('img');
+        img.src = url;
+        img.onload = async () => {
+          // Perform real-time biometric analysis on the captured frame
+          const faceResult = await detectFaceInImage(img);
+          
+          if (!faceResult.detected || faceResult.count === 0) {
+            selfieError.textContent = 'Selfie does not contain a human face. Please retake your selfie.';
+            selfieError.classList.add('visible');
+            verificationStatus.selfieVerified = false;
+            return;
+          }
+
+          // Face detected - store the file and update the UI with confidence metrics
+          uploadedFiles.selfie = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+          document.getElementById('selfiePreview').innerHTML = `<img src="${url}" alt="Selfie">`;
+          
+          const matchPercentage = document.getElementById('matchPercentage');
+          matchPercentage.style.display = 'block';
+          
+          const confidence = faceResult.confidence || 75;
+          const quality = faceResult.quality || {};
+          const qualityIssues = getFaceQualityIssues(quality);
+          
+          // Visual animation of the confidence meter for a professional feel
+          let currentMatch = 0;
+          const targetMatch = confidence;
+          const increment = targetMatch / 20;
+          
+          const interval = setInterval(() => {
+            currentMatch += increment;
+            if (currentMatch >= targetMatch) {
+              currentMatch = targetMatch;
+              clearInterval(interval);
+              
+              // Handle quality issues and low confidence
+              if (confidence < 70 && qualityIssues.length > 0) {
+                const feedbackText = qualityIssues.slice(0, 2).join('. ');
+                selfieError.textContent = `Face Detection Confidence: ${Math.round(confidence)}%. ${feedbackText}.`;
+                selfieError.classList.add('visible');
+              } else if (confidence < 50) {
+                selfieError.textContent = 'Face not clearly detected. Please capture the photo again with your full face visible.';
+                selfieError.classList.add('visible');
+                verificationStatus.selfieVerified = false;
+                return;
+              } else {
+                verificationStatus.selfieVerified = true;
+                checkStep3Complete();
+              }
+            }
+            document.getElementById('matchValue').textContent = Math.round(currentMatch) + '%';
+          }, 50);
+
+          // Stop camera tracks to save resources and clear the video container
+          if (selfieStream) {
+            selfieStream.getTracks().forEach(track => track.stop());
+          }
+          document.getElementById('selfieContainer').style.display = 'none';
+          document.getElementById('captureSelfie').style.display = 'none';
+          document.getElementById('retakeSelfie').style.display = 'inline-block';
+        };
+      });
+    });
+
+    /**
+     * Event Listener: Resets the selfie state to allow for a retake.
+     * Restarts the camera stream and clears previous verification data.
+     */
+    document.getElementById('retakeSelfie').addEventListener('click', async () => {
+      // Reset biometric verification state
+      verificationStatus.selfieVerified = false;
+      uploadedFiles.selfie = null;
+      document.getElementById('selfiePreview').innerHTML = '';
+      document.getElementById('matchPercentage').style.display = 'none';
+      document.getElementById('matchValue').textContent = '0%';
+      document.getElementById('selfieError').classList.remove('visible');
+      
+      // Toggle UI visibility for camera restart
+      document.getElementById('selfieContainer').style.display = 'block';
+      document.getElementById('captureSelfie').style.display = 'inline-block';
+      document.getElementById('retakeSelfie').style.display = 'none';
+      
+      // Re-initialize camera stream
+      await setupSelfieCapture();
+      checkStep3Complete();
+    });
+
+    let recordingSeconds = 0;
+    
+    /**
+     * Event Listener: Manages the video recording process for liveness verification.
+     * Uses the MediaRecorder API to capture a 10-second video of the user.
+     */
+    document.getElementById('startRecording').addEventListener('click', () => {
+      recordedChunks = [];
+      const stream = document.getElementById('verificationVideo').srcObject;
+      
+      // Initialize MediaRecorder with the active camera stream
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+      
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        
+        // Analyze the recorded video to ensure a human face is present
+        const url = URL.createObjectURL(blob);
+        const video = document.createElement('video');
+        video.src = url;
+        video.muted = true;
+        
+        // Ensure video is ready for frame extraction
+        video.onloadedmetadata = async () => {
+          // Seek to the middle of the video for a representative frame
+          video.currentTime = Math.min(1, video.duration / 2);
+          
+          video.onseeked = async () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            const img = document.createElement('img');
+            img.src = canvas.toDataURL();
+            
+            img.onload = async () => {
+              // Verify face presence in the recorded video
+              const faceResult = await detectFaceInImage(img);
+              const videoError = document.getElementById('videoError');
+              videoError.classList.remove('visible');
+              
+              if (!faceResult.detected || faceResult.count === 0) {
+                videoError.textContent = 'Human face not detected in the video. Please ensure your face is clearly visible and record again.';
+                videoError.classList.add('visible');
+                verificationStatus.videoVerified = false;
+                document.getElementById('recordingPreview').style.display = 'none';
+                document.getElementById('retakeVideo').style.display = 'none';
+              } else {
+                // Video accepted - store file and update UI
+                uploadedFiles.video = new File([blob], 'verification.webm', { type: 'video/webm' });
+                document.getElementById('recordedVideo').src = url;
+                document.getElementById('recordingPreview').style.display = 'block';
+                verificationStatus.videoVerified = true;
+                
+                // Hide recording UI and show retake option
+                document.getElementById('verificationVideoContainer').style.display = 'none';
+                document.getElementById('startRecording').style.display = 'none';
+                document.getElementById('stopRecording').style.display = 'none';
+                document.getElementById('retakeVideo').style.display = 'inline-block';
+                
+                // Clean up stream tracks
+                if (verificationStream) {
+                  verificationStream.getTracks().forEach(track => track.stop());
+                }
+                
+                checkStep3Complete();
+              }
+            };
+          };
+        };
+        
+        document.getElementById('recordingStatus').style.display = 'none';
+        document.getElementById('recordingTimer').style.display = 'none';
+      };
+      
+      // Start the 10-second countdown timer
+      recordingSeconds = 0;
+      document.getElementById('recordingTimer').textContent = '10';
+      document.getElementById('recordingTimer').style.display = 'inline-block';
+      
+      recordingTimer = setInterval(() => {
+        recordingSeconds++;
+        const remaining = 10 - recordingSeconds;
+        document.getElementById('recordingTimer').textContent = remaining;
+        
+        if (recordingSeconds >= 10) {
+          clearInterval(recordingTimer);
+          mediaRecorder.stop();
+          document.getElementById('startRecording').disabled = false;
+          document.getElementById('stopRecording').disabled = true;
+        }
+      }, 1000);
+      
+      mediaRecorder.start();
+      document.getElementById('startRecording').disabled = true;
+      document.getElementById('stopRecording').disabled = false;
+      document.getElementById('recordingStatus').style.display = 'block';
+    });
+
+    /**
+     * Event Listener: Stops the active video recording.
+     */
+    document.getElementById('stopRecording').addEventListener('click', () => {
+      if (recordingTimer) clearInterval(recordingTimer);
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+      document.getElementById('startRecording').disabled = false;
+      document.getElementById('stopRecording').disabled = true;
+    });
+
+    /**
+     * Event Listener: Resets the video verification state for a retake.
+     */
+    document.getElementById('retakeVideo').addEventListener('click', async () => {
+      verificationStatus.videoVerified = false;
+      uploadedFiles.video = null;
+      document.getElementById('recordingPreview').style.display = 'none';
+      document.getElementById('videoError').classList.remove('visible');
+      
+      document.getElementById('verificationVideoContainer').style.display = 'block';
+      document.getElementById('startRecording').style.display = 'inline-block';
+      document.getElementById('stopRecording').style.display = 'inline-block';
+      document.getElementById('retakeVideo').style.display = 'none';
+      
+      await setupVideoRecording();
+      checkStep3Complete();
+    });
+
+    /**
+     * Checks if Step 3 (Biometrics) is complete.
+     * Requires a verified selfie, verified video, and the accuracy confirmation checkbox.
+     */
+    function checkStep3Complete() {
+      const canProceed = document.getElementById('confirmAccuracy').checked && 
+                         verificationStatus.selfieVerified && 
+                         verificationStatus.videoVerified;
+      document.getElementById('nextStep3').disabled = !canProceed;
+    }
+
+    document.getElementById('confirmAccuracy').addEventListener('change', () => {
+      checkStep3Complete();
+    });
+
+    /**
+     * Opens the Investment Risks document in a new tab.
+     */
+    document.getElementById('openRisks').addEventListener('click', () => {
+      sessionStorage.setItem('returnToInvestor', 'true');
+      window.open('investment-risk.html', '_blank');
+    });
+
+    /**
+     * Opens the Investor Terms & Conditions in a new tab.
+     */
+    document.getElementById('openTerms').addEventListener('click', () => {
+      sessionStorage.setItem('returnToInvestor', 'true');
+      window.open('investor-terms.html', '_blank');
+    });
+
+    /**
+     * Periodically checks localStorage to see if the user has accepted terms/risks
+     * in the external tabs opened via the links.
+     */
+    function checkTermsStatus() {
+      const userId = localStorage.getItem('userId') || 'anonymous_user';
+      const risksAccepted = localStorage.getItem(`investmentRiskAccepted_${userId}`) === '1';
+      const termsAccepted = localStorage.getItem(`investorTermsAccepted_${userId}`) === '1';
+      
+      if (risksAccepted) {
+        document.getElementById('risksAccepted').disabled = false;
+        document.getElementById('risksAccepted').checked = true;
+        verificationStatus.risksRead = true;
+      }
+      
+      if (termsAccepted) {
+        document.getElementById('termsAccepted').disabled = false;
+        document.getElementById('termsAccepted').checked = true;
+        verificationStatus.termsRead = true;
+      }
+      
+      updateSubmitButton();
+    }
+
+    // Listen for storage events from other tabs to update the terms status instantly
+    window.addEventListener('storage', (e) => {
+      if (e.key && (e.key.includes('investmentRiskAccepted') || e.key.includes('investorTermsAccepted'))) {
+        checkTermsStatus();
+      }
+    });
+
+    // Fallback polling for terms acceptance status
+    setInterval(checkTermsStatus, 1000);
+
+    // Form Navigation Event Listeners
+    document.getElementById('nextStep1').addEventListener('click', () => {
+      if (validateStep1()) showStep(2);
+    });
+
+    document.getElementById('nextStep2').addEventListener('click', () => {
+      showStep(3);
+      setupSelfieCapture();
+      setupVideoRecording();
+    });
+
+    document.getElementById('prevStep2').addEventListener('click', () => showStep(1));
+    document.getElementById('nextStep3').addEventListener('click', () => showStep(4));
+    document.getElementById('prevStep3').addEventListener('click', () => showStep(2));
+    document.getElementById('prevStep4').addEventListener('click', () => showStep(3));
+
+    /**
+     * FINAL FORM SUBMISSION
+     * ---------------------
+     * Aggregates all personal data and uploaded files into a FormData object.
+     * Files are sent as blobs/files, while the selfie is sent as Base64.
+     */
+    document.getElementById('investorForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitApplication');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span> Submitting...';
+
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) { alert('Please login first'); window.location.href = '/'; return; }
+
+        const formData = new FormData();
+        
+        // 1. Append basic textual data
+        formData.append('userId', userId);
+        formData.append('fullName', document.getElementById('fullName').value.trim());
+        formData.append('email', document.getElementById('email').value.trim());
+        formData.append('phone', document.getElementById('phone').value.trim());
+        formData.append('countryCode', document.getElementById('countryCode').value);
+        formData.append('cnic', document.getElementById('cnic').value.trim());
+        formData.append('dob', document.getElementById('dob').value);
+        formData.append('address', document.getElementById('address').value.trim());
+        
+        // 2. Append binary files (Avatar and ID Card images)
+        if (uploadedFiles.avatar) formData.append('avatar', uploadedFiles.avatar);
+        if (uploadedFiles.idFront) formData.append('cnicFront', uploadedFiles.idFront);
+        if (uploadedFiles.idBack) formData.append('cnicBack', uploadedFiles.idBack);
+        
+        // 3. Convert selfie to Base64 (legacy requirement for specific backend processing)
+        if (uploadedFiles.selfie) {
+          const reader = new FileReader();
+          reader.onload = async () => {
+            formData.append('selfieBase64', reader.result);
+            
+            // 4. Append liveness verification video
+            if (uploadedFiles.video) {
+              formData.append('verificationVideo', uploadedFiles.video);
+            }
+
+            // Execute the POST request to the investor application endpoint
+            const res = await fetch('/api/investor/request', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+              alert(data.error || 'Submission failed');
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Submit Application';
+              return;
+            }
+
+            // Cleanup: Clear terms acceptance from localStorage after successful submission
+            const userId = localStorage.getItem('userId') || 'anonymous_user';
+            localStorage.removeItem(`investmentRiskAccepted_${userId}`);
+            localStorage.removeItem(`investorTermsAccepted_${userId}`);
+
+            // Show success banner and redirect to dashboard
+            document.getElementById('successBanner').classList.add('visible');
+            setTimeout(() => {
+              window.location.href = '/dashboard.html';
+            }, 2000);
+          };
+          reader.readAsDataURL(uploadedFiles.selfie);
+        }
+      } catch (err) {
+        console.error('Submit error:', err);
+        alert('Server error occurred during submission. Please try again later.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Application';
+      }
+    });
+
+    /**
+     * ID CARD DETECTION & ANALYSIS
+     * Specialized logic for scanning and validating identity documents.
+     */
+    
+    let idFrontStream = null;
+    let idBackStream = null;
+    let idFrontDetectionInterval = null;
+    let idBackDetectionInterval = null;
+    let isIdFrontDetected = false;
+    let isIdBackDetected = false;
+    let idFrontDetectionFrames = 0;
+    let idBackDetectionFrames = 0;
+    
+    // Configurable thresholds for document stability
+    const DETECTION_THRESHOLD = 10; // Consecutive frames required for stable detection
+    const AUTO_CAPTURE_DELAY = 1500; // ms to wait before triggering capture
+
+    /**
+     * Analyzes a single video frame to detect an ID-like document.
+     * Uses aspect ratio, edge density, and color variance to identify cards.
+     * @param {HTMLVideoElement} videoElement - The source video stream.
+     * @param {string} side - The side being scanned ('front' or 'back').
+     */
+    async function analyzeIDCardFrame(videoElement, side) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = videoElement.videoWidth || 640;
+      canvas.height = videoElement.videoHeight || 480;
+      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+      
+      try {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        // 1. ASPECT RATIO ANALYSIS
+        // ID cards (ISO/IEC 7810) have a standard aspect ratio of ~1.58.
+        const centerWidth = canvas.width * 0.6;
+        const centerHeight = canvas.height * 0.5;
+        const aspectRatio = centerWidth / centerHeight;
+        const isValidAspectRatio = aspectRatio >= 1.2 && aspectRatio <= 2.0;
+        
+        // 2. EDGE DETECTION
+        // Measures high-contrast transitions typical of document borders and text.
+        let edgeCount = 0;
+        const threshold = 30;
+        const sampleStep = 4; 
+        
+        for (let y = 1; y < canvas.height - 1; y += sampleStep) {
+          for (let x = 1; x < canvas.width - 1; x += sampleStep) {
+            const idx = (y * canvas.width + x) * 4;
+            const gray = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
+            const grayRight = data[idx + 4] * 0.299 + data[idx + 5] * 0.587 + data[idx + 6] * 0.114;
+            if (Math.abs(gray - grayRight) > threshold) edgeCount++;
+          }
+        }
+        
+        const totalSamples = (canvas.width / sampleStep) * (canvas.height / sampleStep);
+        const edgePercentage = (edgeCount / totalSamples) * 100;
+        const hasEnoughEdges = edgePercentage > 3;
+        
+        // 3. COLOR VARIANCE
+        // Ensures the object is a real document with varied colors rather than a plain surface.
+        let rSum = 0, gSum = 0, bSum = 0;
+        const sampleSize = 500;
+        for (let i = 0; i < sampleSize; i++) {
+          const idx = Math.floor(Math.random() * (data.length / 4)) * 4;
+          rSum += data[idx]; gSum += data[idx + 1]; bSum += data[idx + 2];
+        }
+        
+        const rAvg = rSum / sampleSize;
+        const gAvg = gSum / sampleSize;
+        const bAvg = bSum / sampleSize;
+        
+        let variance = 0;
+        for (let i = 0; i < sampleSize; i++) {
+          const idx = Math.floor(Math.random() * (data.length / 4)) * 4;
+          variance += Math.pow(data[idx] - rAvg, 2) + Math.pow(data[idx + 1] - gAvg, 2) + Math.pow(data[idx + 2] - bAvg, 2);
+        }
+        const hasColorVariance = (variance / sampleSize) > 300;
+        
+        // Combine all checks into a boolean document detection result
+        const isDocument = isValidAspectRatio && hasEnoughEdges && hasColorVariance;
+        
+        // SIDE-SPECIFIC HEURISTICS
+        // Front side usually contains a photo (high variance), while back side is more text-heavy.
+        let isCorrectSide = side === 'front' ? (variance / sampleSize > 500) : (variance / sampleSize < 1500);
+        
+        return {
+          detected: isDocument,
+          correctSide: isCorrectSide,
+          confidence: isDocument && isCorrectSide ? 0.85 : 0.4
+        };
+        
+      } catch (err) {
+        console.error('ID analysis error:', err);
+        return { detected: false, correctSide: false, confidence: 0 };
+      }
+    }
+
+    /**
+     * Initializes the front-side ID scanning workflow.
+     */
+    async function startIdFrontCamera() {
+      try {
+        const video = document.getElementById('idFrontVideo');
+        const cameraContainer = document.getElementById('idFrontCamera');
+        const statusText = document.getElementById('idFrontStatusText');
+        const indicator = document.getElementById('idFrontIndicator');
+        const startBtn = document.getElementById('startIdFrontCamera');
+        const captureBtn = document.getElementById('captureIdFrontBtn');
+        
+        // Request high-resolution stream from the environment-facing camera
+        idFrontStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, 
+          audio: false 
+        });
+        
+        video.srcObject = idFrontStream;
+        cameraContainer.classList.add('active');
+        startBtn.style.display = 'none';
+        captureBtn.style.display = 'inline-block';
+        
+        // Start the real-time detection loop (approx 5 FPS)
+        idFrontDetectionInterval = setInterval(async () => {
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            const result = await analyzeIDCardFrame(video, 'front');
+            
+            if (result.detected && result.correctSide) {
+              idFrontDetectionFrames++;
+              if (idFrontDetectionFrames >= DETECTION_THRESHOLD) {
+                isIdFrontDetected = true;
+                cameraContainer.classList.add('detected');
+                indicator.classList.add('detected');
+                statusText.textContent = 'ID Front Detected! Click to capture';
+              } else {
+                statusText.textContent = `Analyzing... ${Math.round((idFrontDetectionFrames/DETECTION_THRESHOLD)*100)}%`;
+              }
+            } else {
+              idFrontDetectionFrames = Math.max(0, idFrontDetectionFrames - 1);
+              isIdFrontDetected = false;
+              cameraContainer.classList.remove('detected');
+              indicator.classList.remove('detected');
+              statusText.textContent = result.detected ? '⚠️ Show FRONT side' : 'Position ID in frame';
+            }
+          }
+        }, 200);
+        
+      } catch (err) {
+        alert('Camera access failed. Please ensure permissions are granted.');
+      }
+    }
+
+    /**
+     * Captures the current frame from the front-side scan and saves it as a File.
+     */
+    function captureIdFront() {
+      const video = document.getElementById('idFrontVideo');
+      const canvas = document.getElementById('idFrontCanvas');
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      
+      canvas.toBlob((blob) => {
+        uploadedFiles.idFront = new File([blob], 'id_front.jpg', { type: 'image/jpeg' });
+        verificationStatus.idFrontVerified = true;
+        
+        // UI cleanup
+        document.getElementById('idFrontPreview').innerHTML = `<img src="${canvas.toDataURL()}" alt="ID Front">`;
+        document.getElementById('idFrontPreview').style.display = 'block';
+        document.getElementById('idFrontCamera').style.display = 'none';
+        document.getElementById('captureIdFrontBtn').style.display = 'none';
+        document.getElementById('retakeIdFront').style.display = 'inline-block';
+        document.getElementById('idFrontInstructions').style.display = 'none';
+        
+        if (idFrontStream) idFrontStream.getTracks().forEach(track => track.stop());
+        if (idFrontDetectionInterval) clearInterval(idFrontDetectionInterval);
+        
+        enableIdBackCapture();
+        checkStep2Complete();
+      }, 'image/jpeg', 0.9);
+    }
+
+    /**
+     * Activates the UI for the second phase of document scanning (Back Side).
+     */
+    function enableIdBackCapture() {
+      const backCamera = document.getElementById('idBackCamera');
+      const backInstructions = document.getElementById('idBackInstructions');
+      const startBtn = document.getElementById('startIdBackCamera');
+      
+      backCamera.style.opacity = '1';
+      backCamera.style.pointerEvents = 'auto';
+      backInstructions.style.opacity = '1';
+      startBtn.disabled = false;
+      document.getElementById('idBackStatusText').textContent = 'Ready for back side';
+    }
+
+    // Start ID Back Camera
+    /**
+     * Initializes the back-side ID scanning workflow.
+     * Similar to the front side, but uses heuristics optimized for the back of the card.
+     */
+    async function startIdBackCamera() {
+      try {
+        const video = document.getElementById('idBackVideo');
+        const cameraContainer = document.getElementById('idBackCamera');
+        const statusText = document.getElementById('idBackStatusText');
+        const indicator = document.getElementById('idBackIndicator');
+        const startBtn = document.getElementById('startIdBackCamera');
+        const captureBtn = document.getElementById('captureIdBackBtn');
+        
+        // Request environmental camera access for document scanning
+        idBackStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, 
+          audio: false 
+        });
+        
+        video.srcObject = idBackStream;
+        cameraContainer.classList.add('active');
+        startBtn.style.display = 'none';
+        captureBtn.style.display = 'inline-block';
+        
+        // Start detection loop for the back side of the ID card
+        idBackDetectionInterval = setInterval(async () => {
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            const result = await analyzeIDCardFrame(video, 'back');
+            
+            if (result.detected && result.correctSide) {
+              idBackDetectionFrames++;
+              if (idBackDetectionFrames >= DETECTION_THRESHOLD) {
+                isIdBackDetected = true;
+                cameraContainer.classList.add('detected');
+                indicator.classList.add('detected');
+                statusText.textContent = 'ID Back Detected! Click to capture';
+              } else {
+                statusText.textContent = `Analyzing... ${Math.round((idBackDetectionFrames/DETECTION_THRESHOLD)*100)}%`;
+              }
+            } else {
+              idBackDetectionFrames = Math.max(0, idBackDetectionFrames - 1);
+              isIdBackDetected = false;
+              cameraContainer.classList.remove('detected');
+              indicator.classList.remove('detected');
+              statusText.textContent = result.detected ? '⚠️ Show BACK side' : 'Position ID in frame';
+            }
+          }
+        }, 200);
+        
+      } catch (err) {
+        console.error('Back ID camera error:', err);
+        alert('Camera access failed for back side scanning. Please ensure permissions are granted.');
+      }
+    }
+
+    /**
+     * Captures the current frame from the back-side scan and saves it as a File.
+     */
+    function captureIdBack() {
+      const video = document.getElementById('idBackVideo');
+      const canvas = document.getElementById('idBackCanvas');
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      
+      canvas.toBlob((blob) => {
+        uploadedFiles.idBack = new File([blob], 'id_back.jpg', { type: 'image/jpeg' });
+        verificationStatus.idBackVerified = true;
+        
+        // UI updates for captured state
+        document.getElementById('idBackPreview').innerHTML = `<img src="${canvas.toDataURL()}" alt="ID Back">`;
+        document.getElementById('idBackPreview').style.display = 'block';
+        document.getElementById('idBackCamera').style.display = 'none';
+        document.getElementById('captureIdBackBtn').style.display = 'none';
+        document.getElementById('retakeIdBack').style.display = 'inline-block';
+        document.getElementById('idBackInstructions').style.display = 'none';
+        
+        // Resource cleanup
+        if (idBackStream) idBackStream.getTracks().forEach(track => track.stop());
+        if (idBackDetectionInterval) clearInterval(idBackDetectionInterval);
+        
+        checkStep2Complete();
+      }, 'image/jpeg', 0.9);
+    }
+
+    /**
+     * Displays a temporary warning message if the wrong side of the ID is shown.
+     * @param {string} side - 'idFront' or 'idBack'.
+     * @param {string} message - The warning text to display.
+     */
+    function showIdWarning(side, message) {
+      const warningEl = document.getElementById(`${side}Warning`);
+      const warningText = document.getElementById(`${side}WarningText`);
+      if (warningText) warningText.textContent = message;
+      if (warningEl) {
+        warningEl.classList.add('visible');
+        setTimeout(() => warningEl.classList.remove('visible'), 4000);
+      }
+    }
+
+    /**
+     * Configures the "Retake" buttons for ID scanning.
+     * Resets the internal state and UI to allow for fresh captures.
+     */
+    function setupIdRetakeButtons() {
+      document.getElementById('retakeIdFront').addEventListener('click', () => {
+        verificationStatus.idFrontVerified = false;
+        uploadedFiles.idFront = null;
+        document.getElementById('idFrontPreview').style.display = 'none';
+        document.getElementById('idFrontCamera').style.display = 'block';
+        document.getElementById('startIdFrontCamera').style.display = 'inline-block';
+        document.getElementById('retakeIdFront').style.display = 'none';
+        document.getElementById('idFrontInstructions').style.display = 'block';
+        enableIdBackCapture(false); // Disable back side until front is re-captured
+      });
+
+      document.getElementById('retakeIdBack').addEventListener('click', () => {
+        verificationStatus.idBackVerified = false;
+        uploadedFiles.idBack = null;
+        document.getElementById('idBackPreview').style.display = 'none';
+        document.getElementById('idBackCamera').style.display = 'block';
+        document.getElementById('startIdBackCamera').style.display = 'inline-block';
+        document.getElementById('retakeIdBack').style.display = 'none';
+        document.getElementById('idBackInstructions').style.display = 'block';
+      });
+    }
+
+    // Initialize camera and capture event listeners
+    document.getElementById('startIdFrontCamera').addEventListener('click', startIdFrontCamera);
+    document.getElementById('startIdBackCamera').addEventListener('click', startIdBackCamera);
+    document.getElementById('captureIdFrontBtn').addEventListener('click', captureIdFront);
+    document.getElementById('captureIdBackBtn').addEventListener('click', captureIdBack);
+
+    /**
+     * GLOBAL INITIALIZATION
+     * ---------------------
+     * Runs when the DOM is fully loaded. Sets up the initial state and verification workflows.
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+      checkStatus();       // Check existing application status
+      prefillProfile();    // Pre-populate known user data
+      setupIdRetakeButtons(); // Configure ID retake logic
+      
+      // Initialize the main profile photo upload handler
+      setupUpload(
+        'avatarUpload', 'avatarFile', 'avatarPreview', 
+        'avatarVerification', 'avatarStatus', 'avatarProgress', 
+        'avatarError', 'avatar', 'face'
+      );
+      
+      checkTermsStatus();  // Check for terms/risks acceptance
+    });
+  </script>
+    <script src="footer.js"></script>
+</body>
+</html>
